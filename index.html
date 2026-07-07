@@ -26,10 +26,10 @@
       </span>
     </div>
     <div class="home-tabs" id="homeTabs">
-      <button type="button" class="home-tab active" data-hometab="situation">Tình hình</button>
-      <button type="button" class="home-tab" data-hometab="formula">Công thức</button>
+      <button type="button" class="home-tab active" data-hometab="situation" data-i18n="hometab.situation">Tình hình</button>
+      <button type="button" class="home-tab" data-hometab="formula" data-i18n="hometab.formula">Công thức</button>
     </div>
-    <button type="button" id="upgradeBtn" class="upgrade-btn" aria-label="Nâng cấp tài khoản">
+    <button type="button" id="upgradeBtn" class="upgrade-btn" data-i18n-aria="upgradeBtn.aria" aria-label="Nâng cấp tài khoản">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20M12 3l-3 6 3 12 3-12z"/></svg>
     </button>
   </header>
@@ -41,8 +41,8 @@
         <div class="health-card-inner" id="healthCardInner">
           <div class="health-card-face health-card-front">
             <div class="health-top">
-              <span class="health-label">Sức khỏe tài chính</span>
-              <span class="health-badge" id="healthBadge" hidden>🏆 Kỷ lục mới</span>
+              <span class="health-label" data-i18n="health.label">Sức khỏe tài chính</span>
+              <span class="health-badge" id="healthBadge" data-i18n="health.badge" hidden>🏆 Kỷ lục mới</span>
             </div>
             <div class="health-pct" id="healthPct">0%</div>
             <div class="health-bar-track">
@@ -50,31 +50,31 @@
             </div>
             <div class="health-meta">
               <div class="health-meta-item">
-                <span class="health-meta-label">Hiện tại</span>
+                <span class="health-meta-label" data-i18n="health.current">Hiện tại</span>
                 <span class="health-meta-value" id="healthCurrent">0 ₫</span>
               </div>
               <div class="health-meta-item align-right">
-                <span class="health-meta-label">Kỷ lục</span>
+                <span class="health-meta-label" data-i18n="health.record">Kỷ lục</span>
                 <span class="health-meta-value" id="healthRecord">0 ₫</span>
               </div>
             </div>
           </div>
           <div class="health-card-face health-card-back">
             <span class="health-back-emoji">🚀</span>
-            <p class="health-back-text">Thanh Sức khỏe Tài chính giúp biểu thị tình trạng tài chính hiện tại so với tổng số tiền kỷ lục của bạn</p>
-            <p class="health-back-tagline">"Liên tục tiến lên"</p>
+            <p class="health-back-text" data-i18n="health.back.text">Thanh Sức khỏe Tài chính giúp biểu thị tình trạng tài chính hiện tại so với tổng số tiền kỷ lục của bạn</p>
+            <p class="health-back-tagline" data-i18n="health.back.tagline">"Liên tục tiến lên"</p>
           </div>
         </div>
       </section>
 
       <section class="dash-grid">
         <div class="dash-card js-nav-stats">
-          <div class="dash-label">Tổng tài sản</div>
+          <div class="dash-label" data-i18n="dash.totalAssets">Tổng tài sản</div>
           <div class="dash-value js-total-assets">0 ₫</div>
         </div>
         <div class="dash-card js-nav-stats">
           <div class="dash-row-top">
-            <div class="dash-label">Hôm nay</div>
+            <div class="dash-label" data-i18n="dash.today">Hôm nay</div>
             <span class="dash-growth js-today-growth" hidden>0%</span>
           </div>
           <div class="dash-value js-today-change">0 ₫</div>
@@ -85,12 +85,12 @@
     <div id="formulaTab" hidden>
       <section class="dash-grid">
         <div class="dash-card js-nav-stats">
-          <div class="dash-label">Tổng tài sản</div>
+          <div class="dash-label" data-i18n="dash.totalAssets">Tổng tài sản</div>
           <div class="dash-value js-total-assets">0 ₫</div>
         </div>
         <div class="dash-card js-nav-stats">
           <div class="dash-row-top">
-            <div class="dash-label">Hôm nay</div>
+            <div class="dash-label" data-i18n="dash.today">Hôm nay</div>
             <span class="dash-growth js-today-growth" hidden>0%</span>
           </div>
           <div class="dash-value js-today-change">0 ₫</div>
@@ -102,8 +102,8 @@
           <button type="button" class="formula-trigger" id="formulaTrigger">
             <span class="formula-trigger-icon" id="formulaTriggerIcon">🧮</span>
             <span class="formula-trigger-text">
-              <span class="formula-trigger-name" id="formulaTriggerName">Chọn công thức</span>
-              <span class="formula-trigger-desc" id="formulaTriggerDesc">Nhấn để xem các công thức chia tiền</span>
+              <span class="formula-trigger-name" id="formulaTriggerName" data-i18n="formula.trigger.name">Chọn công thức</span>
+              <span class="formula-trigger-desc" id="formulaTriggerDesc" data-i18n="formula.trigger.desc">Nhấn để xem các công thức chia tiền</span>
             </span>
             <span class="formula-trigger-chevron">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
@@ -113,57 +113,57 @@
           <button type="button" class="formula-pill" data-formula="jars6">
             <span class="formula-pill-icon">🫙</span>
             <span class="formula-pill-text">
-              <span class="formula-pill-name">6 Chiếc Lọ</span>
+              <span class="formula-pill-name" data-i18n="formula.name.jars6">6 Chiếc Lọ</span>
               <span class="formula-pill-desc">55/10/10/10/10/5</span>
             </span>
           </button>
           <button type="button" class="formula-pill" data-formula="plan503020">
             <span class="formula-pill-icon">📊</span>
             <span class="formula-pill-text">
-              <span class="formula-pill-name">50/30/20</span>
-              <span class="formula-pill-desc">Thiết yếu · Hưởng thụ · Tiết kiệm</span>
+              <span class="formula-pill-name" data-i18n="formula.name.plan503020">50/30/20</span>
+              <span class="formula-pill-desc"><span data-i18n="bucket.plan503020.need">Thiết yếu</span> · <span data-i18n="bucket.plan503020.want">Hưởng thụ</span> · <span data-i18n="formula.plan503020.pillDesc.save">Tiết kiệm</span></span>
             </span>
           </button>
           <button type="button" class="formula-pill" data-formula="babylon">
             <span class="formula-pill-icon">🏛️</span>
             <span class="formula-pill-text">
-              <span class="formula-pill-name">Babylon</span>
+              <span class="formula-pill-name" data-i18n="formula.name.babylon">Babylon</span>
               <span class="formula-pill-desc">90/10</span>
             </span>
           </button>
           <button type="button" class="formula-pill formula-pill-custom" data-formula="custom">
             <span class="formula-pill-icon">✨</span>
             <span class="formula-pill-text">
-              <span class="formula-pill-name">Tự quyết</span>
-              <span class="formula-pill-desc" id="customFormulaDesc">Tự đặt tỉ lệ</span>
+              <span class="formula-pill-name" data-i18n="formula.name.custom">Tự quyết</span>
+              <span class="formula-pill-desc" id="customFormulaDesc" data-i18n="formula.customRatio">Tự đặt tỉ lệ</span>
             </span>
-            <span class="formula-pill-edit" id="customFormulaEdit" title="Chỉnh sửa">
+            <span class="formula-pill-edit" id="customFormulaEdit" data-i18n-title="formula.custom.editTitle" title="Chỉnh sửa">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>
             </span>
           </button>
           </div>
         </div>
 
-        <div class="bucket-list-label" id="bucketPanelTitle">Chia tiền theo công thức</div>
+        <div class="bucket-list-label" id="bucketPanelTitle" data-i18n="formula.bucketPanelTitle">Chia tiền theo công thức</div>
         <div id="bucketList" class="bucket-list"></div>
-        <div id="bucketEmpty" class="empty-state">Chọn một công thức bên trên để bắt đầu chia tiền quan sát chi tiêu.</div>
-        <p class="bucket-note">Bảng này chỉ mang tính quan sát, giúp bạn ước lượng chi tiêu theo công thức đã chọn.</p>
+        <div id="bucketEmpty" class="empty-state" data-i18n="formula.bucketEmpty">Chọn một công thức bên trên để bắt đầu chia tiền quan sát chi tiêu.</div>
+        <p class="bucket-note" data-i18n="formula.bucketNote">Bảng này chỉ mang tính quan sát, giúp bạn ước lượng chi tiêu theo công thức đã chọn.</p>
       </div>
     </div>
 
     <div class="panel list-panel">
       <div class="panel-header">
-        <h2>Lịch sử giao dịch</h2>
+        <h2 data-i18n="tx.history">Lịch sử giao dịch</h2>
         <div class="filter-chips" id="filterChips">
-          <button class="chip active" data-filter="all">Tất cả</button>
-          <button class="chip" data-filter="income">Thu</button>
-          <button class="chip" data-filter="expense">Chi</button>
+          <button class="chip active" data-filter="all" data-i18n="tx.filter.all">Tất cả</button>
+          <button class="chip" data-filter="income" data-i18n="tx.filter.income">Thu</button>
+          <button class="chip" data-filter="expense" data-i18n="tx.filter.expense">Chi</button>
         </div>
       </div>
       <ul id="transactionList" class="transaction-list"></ul>
       <div id="listEmpty" class="empty-state" hidden>
         <span class="empty-state-icon"><img src="empty-state.svg" alt="" loading="lazy"></span>
-        <span>Chưa có giao dịch nào</span>
+        <span data-i18n="tx.empty">Chưa có giao dịch nào</span>
       </div>
     </div>
   </main>
@@ -171,14 +171,14 @@
   <section class="content" id="statsView" hidden>
 
     <div class="stats-month-picker">
-      <button id="prevMonth" type="button" class="month-nav-btn" aria-label="Tháng trước">
+      <button id="prevMonth" type="button" class="month-nav-btn" data-i18n-aria="stats.prevMonth.aria" aria-label="Tháng trước">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
       </button>
       <label class="month-label-wrap">
         <span class="month-label-text" id="monthLabelText">Tháng 7 · 2026</span>
         <input type="month" id="monthInput" class="month-input-overlay">
       </label>
-      <button id="nextMonth" type="button" class="month-nav-btn" aria-label="Tháng sau">
+      <button id="nextMonth" type="button" class="month-nav-btn" data-i18n-aria="stats.nextMonth.aria" aria-label="Tháng sau">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
       </button>
     </div>
@@ -186,15 +186,15 @@
     <div class="stats-summary-row">
       <div class="stats-summary-item">
         <span class="stats-summary-value income" id="totalIncome">0 ₫</span>
-        <span class="stats-summary-tag">Thu</span>
+        <span class="stats-summary-tag" data-i18n="stats.income">Thu</span>
       </div>
       <div class="stats-summary-item">
         <span class="stats-summary-value expense" id="totalExpense">0 ₫</span>
-        <span class="stats-summary-tag">Chi</span>
+        <span class="stats-summary-tag" data-i18n="stats.expense">Chi</span>
       </div>
       <div class="stats-summary-item">
         <span class="stats-summary-value" id="totalBalance">0 ₫</span>
-        <span class="stats-summary-tag">Dư</span>
+        <span class="stats-summary-tag" data-i18n="stats.balance">Dư</span>
       </div>
     </div>
 
@@ -209,21 +209,21 @@
       </div>
       <div id="trendEmpty" class="empty-state" hidden>
         <span class="empty-state-icon"><img src="empty-state.svg" alt="" loading="lazy"></span>
-        <span>Chưa có dữ liệu</span>
+        <span data-i18n="stats.noData">Chưa có dữ liệu</span>
       </div>
     </div>
 
     <div class="panel donut-panel">
       <div class="donut-switch" id="donutSwitch">
-        <button type="button" class="donut-switch-btn active" data-donut="expense">Chi</button>
-        <button type="button" class="donut-switch-btn" data-donut="income">Thu</button>
+        <button type="button" class="donut-switch-btn active" data-donut="expense" data-i18n="stats.expense">Chi</button>
+        <button type="button" class="donut-switch-btn" data-donut="income" data-i18n="stats.income">Thu</button>
         <span class="donut-switch-thumb"></span>
       </div>
       <div class="chart-wrap">
         <canvas id="categoryChart"></canvas>
         <div id="chartEmpty" class="empty-state" hidden>
           <span class="empty-state-icon"><img src="empty-state.svg" alt="" loading="lazy"></span>
-          <span>Chưa có dữ liệu</span>
+          <span data-i18n="stats.noData">Chưa có dữ liệu</span>
         </div>
       </div>
       <ul id="chartLegend" class="chart-legend"></ul>
@@ -233,7 +233,7 @@
 
   <section class="content" id="settingsView" hidden>
     <div class="panel settings-panel">
-      <div class="panel-header"><h2>Cài đặt</h2></div>
+      <div class="panel-header"><h2 data-i18n="settings.title">Cài đặt</h2></div>
 
       <button type="button" id="premiumStatusRow" class="setting-row setting-row-clickable">
         <div class="setting-text">
@@ -244,28 +244,28 @@
       </button>
 
       <div class="setting-block">
-        <div class="setting-title">Tông màu chủ đạo</div>
+        <div class="setting-title" data-i18n="settings.theme">Tông màu chủ đạo</div>
         <div class="theme-swatches" id="themeSwatches"></div>
       </div>
 
       <div class="setting-block">
-        <div class="setting-title">Ngôn ngữ</div>
-        <div class="pill-options" id="languageOptions">
-          <button type="button" class="pill-option active" data-lang="vi">Tiếng Việt</button>
-          <button type="button" class="pill-option" disabled>English <span class="pill-option-tag">Sắp ra mắt</span></button>
+        <div class="setting-title" data-i18n="settings.language">Ngôn ngữ</div>
+        <div class="pill-options js-lang-options" id="languageOptions">
+          <button type="button" class="pill-option active" data-lang="vi" data-i18n="settings.lang.vi">Tiếng Việt</button>
+          <button type="button" class="pill-option" data-lang="en" data-i18n="settings.lang.en">English</button>
         </div>
       </div>
 
       <div class="setting-block">
-        <div class="setting-title">Đơn vị tiền tệ</div>
-        <div class="setting-desc">Chỉ đổi ký hiệu hiển thị, không quy đổi theo tỷ giá thật</div>
+        <div class="setting-title" data-i18n="settings.currency">Đơn vị tiền tệ</div>
+        <div class="setting-desc" data-i18n="settings.currency.desc">Chỉ đổi ký hiệu hiển thị, không quy đổi theo tỷ giá thật</div>
         <div class="pill-options" id="currencyOptions"></div>
       </div>
 
       <div class="setting-row">
         <div class="setting-text">
-          <div class="setting-title">Âm bàn phím</div>
-          <div class="setting-desc">Tiếng gõ khi nhập số tiền</div>
+          <div class="setting-title" data-i18n="settings.sound">Âm bàn phím</div>
+          <div class="setting-desc" data-i18n="settings.sound.desc">Tiếng gõ khi nhập số tiền</div>
         </div>
         <label class="switch">
           <input type="checkbox" id="soundToggle" checked>
@@ -275,8 +275,8 @@
 
       <div class="setting-row">
         <div class="setting-text">
-          <div class="setting-title">Ghi chú khi thêm nhanh</div>
-          <div class="setting-desc">Hiện ô ghi chú ngay trên bàn phím</div>
+          <div class="setting-title" data-i18n="settings.noteOnAdd">Ghi chú khi thêm nhanh</div>
+          <div class="setting-desc" data-i18n="settings.noteOnAdd.desc">Hiện ô ghi chú ngay trên bàn phím</div>
         </div>
         <label class="switch">
           <input type="checkbox" id="noteToggle">
@@ -286,8 +286,8 @@
 
       <div class="setting-row">
         <div class="setting-text">
-          <div class="setting-title">Ghi chú nhanh</div>
-          <div class="setting-desc">Chạm 1 nút là ghi ngay khoản chi với số tiền &amp; mục đã đặt sẵn</div>
+          <div class="setting-title" data-i18n="settings.quickNote">Ghi chú nhanh</div>
+          <div class="setting-desc" data-i18n="settings.quickNote.desc">Chạm 1 nút là ghi ngay khoản chi với số tiền &amp; mục đã đặt sẵn</div>
         </div>
         <label class="switch">
           <input type="checkbox" id="quickNoteToggle">
@@ -297,60 +297,60 @@
 
       <button type="button" id="openQuickNotesBtn" class="setting-row setting-row-clickable">
         <div class="setting-text">
-          <div class="setting-title">Quản lý ghi chú nhanh</div>
-          <div class="setting-desc">Thêm/xóa các ghi chú thường dùng</div>
+          <div class="setting-title" data-i18n="settings.manageQuickNotes">Quản lý ghi chú nhanh</div>
+          <div class="setting-desc" data-i18n="settings.manageQuickNotes.desc">Thêm/xóa các ghi chú thường dùng</div>
         </div>
         <svg class="setting-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
       </button>
 
       <button type="button" id="openIncomeCatBtn" class="setting-row setting-row-clickable">
         <div class="setting-text">
-          <div class="setting-title">Mục thu nhập</div>
-          <div class="setting-desc">Thêm danh mục thu nhập của riêng bạn</div>
+          <div class="setting-title" data-i18n="settings.incomeCats">Mục thu nhập</div>
+          <div class="setting-desc" data-i18n="settings.incomeCats.desc">Thêm danh mục thu nhập của riêng bạn</div>
         </div>
         <svg class="setting-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
       </button>
 
       <div class="setting-block">
-        <div class="setting-title">Tổng tiền hiện có</div>
-        <div class="setting-desc">Nhập đúng số tiền bạn đang có — hệ thống sẽ chia lại ngay vào các lọ theo công thức đang chọn</div>
+        <div class="setting-title" data-i18n="settings.initialBalance">Tổng tiền hiện có</div>
+        <div class="setting-desc" data-i18n="settings.initialBalance.desc">Nhập đúng số tiền bạn đang có — hệ thống sẽ chia lại ngay vào các lọ theo công thức đang chọn</div>
         <input type="text" inputmode="numeric" id="initialBalanceInput" class="setting-amount-input-full" placeholder="0 ₫">
       </div>
 
       <div class="setting-block">
-        <div class="setting-title">Ngày bắt đầu</div>
-        <div class="setting-desc">Ngày bạn bắt đầu dùng memoney (tự động ghi nhận, không thể chỉnh sửa)</div>
+        <div class="setting-title" data-i18n="settings.startDate">Ngày bắt đầu</div>
+        <div class="setting-desc" data-i18n="settings.startDate.desc">Ngày bạn bắt đầu dùng memoney (tự động ghi nhận, không thể chỉnh sửa)</div>
         <div class="setting-static-value" id="startDateDisplay">—</div>
       </div>
 
       <div class="setting-row">
         <div class="setting-text">
-          <div class="setting-title">Dữ liệu của bạn</div>
-          <div class="setting-desc">Lưu cục bộ trên máy này, không cần tài khoản, không cần mạng 🔒</div>
+          <div class="setting-title" data-i18n="settings.yourData">Dữ liệu của bạn</div>
+          <div class="setting-desc" data-i18n="settings.yourData.desc">Lưu cục bộ trên máy này, không cần tài khoản, không cần mạng 🔒</div>
         </div>
       </div>
 
       <div class="setting-block">
-        <div class="setting-title">Sao lưu &amp; khôi phục</div>
-        <div class="setting-desc">Xuất ra 1 file rồi tự lưu vào Google Drive/iCloud của bạn. Khi đổi máy hoặc lỡ mất dữ liệu, chỉ cần nhập lại file này.</div>
+        <div class="setting-title" data-i18n="settings.backup">Sao lưu &amp; khôi phục</div>
+        <div class="setting-desc" data-i18n="settings.backup.desc">Xuất ra 1 file rồi tự lưu vào Google Drive/iCloud của bạn. Khi đổi máy hoặc lỡ mất dữ liệu, chỉ cần nhập lại file này.</div>
         <div class="backup-actions">
-          <button type="button" id="exportDataBtn" class="btn btn-secondary">Xuất dữ liệu</button>
-          <button type="button" id="importDataBtn" class="btn btn-secondary">Nhập dữ liệu</button>
+          <button type="button" id="exportDataBtn" class="btn btn-secondary" data-i18n="settings.export">Xuất dữ liệu</button>
+          <button type="button" id="importDataBtn" class="btn btn-secondary" data-i18n="settings.import">Nhập dữ liệu</button>
         </div>
         <input type="file" id="importDataFile" accept="application/json" hidden>
       </div>
 
-      <button type="button" id="clearDataBtn" class="btn btn-danger-full">Xóa toàn bộ dữ liệu</button>
+      <button type="button" id="clearDataBtn" class="btn btn-danger-full" data-i18n="settings.clearData">Xóa toàn bộ dữ liệu</button>
 
-      <button type="button" id="shareAppBtn" class="btn btn-secondary settings-btn">Chia sẻ ứng dụng</button>
-      <button type="button" id="appHubBtn" class="btn btn-secondary settings-btn">Trung tâm ứng dụng của chúng tôi</button>
+      <button type="button" id="shareAppBtn" class="btn btn-secondary settings-btn" data-i18n="settings.shareApp">Chia sẻ ứng dụng</button>
+      <button type="button" id="appHubBtn" class="btn btn-secondary settings-btn" data-i18n="settings.appHub">Trung tâm ứng dụng của chúng tôi</button>
     </div>
   </section>
 
   <section class="content" id="goalsView" hidden>
     <div id="goalEmpty" class="empty-state">
       <span class="empty-state-icon"><img src="empty-state.svg" alt="" loading="lazy"></span>
-      <span>Chưa có mục tiêu nào</span>
+      <span data-i18n="goals.empty">Chưa có mục tiêu nào</span>
     </div>
 
     <div id="goalActive" class="panel goal-active-panel" hidden>
@@ -359,7 +359,7 @@
 
       <div class="goal-progress">
         <div class="goal-progress-head">
-          <span class="goal-progress-label">Tiến độ theo thời gian</span>
+          <span class="goal-progress-label" data-i18n="goals.progress">Tiến độ theo thời gian</span>
           <span class="goal-progress-pct" id="goalProgressPct">0%</span>
         </div>
         <div class="goal-progress-track">
@@ -375,24 +375,24 @@
         <div class="goal-timeline-dots" id="goalTimelineDots"></div>
       </div>
 
-      <button type="button" id="goalCancelBtn" class="btn btn-danger goal-cancel-btn">Từ bỏ mục tiêu</button>
+      <button type="button" id="goalCancelBtn" class="btn btn-danger goal-cancel-btn" data-i18n="goals.cancel">Từ bỏ mục tiêu</button>
     </div>
 
-    <button type="button" id="addGoalBtn" class="btn btn-primary goals-add-btn">+ Đặt mục tiêu mới</button>
+    <button type="button" id="addGoalBtn" class="btn btn-primary goals-add-btn" data-i18n="goals.add">+ Đặt mục tiêu mới</button>
   </section>
 
 </div>
 
 <nav class="bottom-nav">
   <div class="nav-side">
-    <button id="navHome" class="nav-btn active" data-view="home" aria-label="Trang chủ">
+    <button id="navHome" class="nav-btn active" data-view="home" data-i18n-aria="nav.home.aria" aria-label="Trang chủ">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9a1 1 0 0 0 1 1H9v-6h6v6h2.5a1 1 0 0 0 1-1v-9"/></svg>
     </button>
-    <button id="navStats" class="nav-btn" data-view="stats" aria-label="Thống kê">
+    <button id="navStats" class="nav-btn" data-view="stats" data-i18n-aria="nav.stats.aria" aria-label="Thống kê">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
     </button>
   </div>
-  <button id="addBtn" class="nav-add" aria-label="Thêm giao dịch">
+  <button id="addBtn" class="nav-add" data-i18n-aria="tx.modalTitle.add" aria-label="Thêm giao dịch">
     <svg viewBox="0 0 19.91 19.91">
       <path fill="#fd4022" d="M15.22,5.6c-.19-.05-.39-.08-.6-.08-.14,0-.27.01-.4.04-.02-.33-.08-.65-.19-.94-.29-.78-.88-1.35-1.62-1.55-.19-.05-.39-.08-.6-.08-.67,0-1.31.3-1.82.79-.5-.5-1.14-.8-1.82-.8-.19,0-.37.02-.56.07-1.02.26-1.7,1.17-1.84,2.3-.15-.03-.31-.05-.47-.05-.19,0-.37.02-.56.07-1.42.36-2.19,1.98-1.75,3.69.3,1.16,1.08,2.04,2.02,2.35-.14.39-.22.81-.22,1.24,0,2.36,2.3,4.28,5.12,4.28s5.12-1.92,5.12-4.28c0-.36-.06-.7-.16-1.03.93-.3,1.71-1.16,2.02-2.29.47-1.7-.27-3.33-1.68-3.72Z"/>
       <ellipse fill="#fff" cx="8.4" cy="6.1" rx="1.4" ry="1.93" transform="translate(-1.25 2.26) rotate(-14.31)"/>
@@ -406,10 +406,10 @@
     </svg>
   </button>
   <div class="nav-side">
-    <button id="navGoals" class="nav-btn" data-view="goals" aria-label="Mục tiêu">
+    <button id="navGoals" class="nav-btn" data-view="goals" data-i18n-aria="nav.goals.aria" aria-label="Mục tiêu">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>
     </button>
-    <button id="navSettings" class="nav-btn" data-view="settings" aria-label="Cài đặt">
+    <button id="navSettings" class="nav-btn" data-view="settings" data-i18n-aria="settings.title" aria-label="Cài đặt">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
     </button>
   </div>
@@ -417,11 +417,11 @@
 
 <div id="modalOverlay" class="modal-overlay" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <h2 id="modalTitle" class="sr-only">Thêm giao dịch</h2>
+    <h2 id="modalTitle" class="sr-only" data-i18n="tx.modalTitle.add">Thêm giao dịch</h2>
 
     <div class="sheet-top">
       <div class="cat-strip" id="catStrip"></div>
-      <button type="button" id="typeToggle" class="sign-toggle expense" aria-label="Đổi khoản thu / khoản chi">−</button>
+      <button type="button" id="typeToggle" class="sign-toggle expense" data-i18n-aria="tx.typeToggle.aria" aria-label="Đổi khoản thu / khoản chi">−</button>
     </div>
 
     <form id="txForm">
@@ -436,12 +436,12 @@
       <div class="quick-note-strip" id="quickNoteStrip" hidden></div>
 
       <div class="field" id="dateField" hidden>
-        <label for="txDate">Ngày</label>
+        <label for="txDate" data-i18n="tx.date">Ngày</label>
         <input type="date" id="txDate">
       </div>
 
       <div class="field" id="noteField" hidden>
-        <input type="text" id="txNote" placeholder="Ghi chú...">
+        <input type="text" id="txNote" placeholder="Ghi chú..." data-i18n-ph="tx.notePlaceholder">
       </div>
 
       <div class="keypad">
@@ -456,14 +456,14 @@
         <button type="button" class="key" data-key="3">3</button>
         <button type="button" class="key key-alt" data-key="000">000</button>
         <button type="button" class="key" data-key="0">0</button>
-        <button type="button" class="key key-alt" data-key="back" aria-label="Xóa 1 số">
+        <button type="button" class="key key-alt" data-key="back" data-i18n-aria="tx.backspace.aria" aria-label="Xóa 1 số">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 5H8l-6 7 6 7h14a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1z"/><path d="M13 9l6 6M19 9l-6 6"/></svg>
         </button>
       </div>
 
       <div class="modal-actions">
-        <button type="button" id="deleteTx" class="btn btn-danger" hidden>Xóa</button>
-        <button type="submit" id="txSaveBtn" class="btn btn-primary">Lưu</button>
+        <button type="button" id="deleteTx" class="btn btn-danger" hidden data-i18n="tx.delete">Xóa</button>
+        <button type="submit" id="txSaveBtn" class="btn btn-primary" data-i18n="tx.save">Lưu</button>
       </div>
     </form>
   </div>
@@ -471,15 +471,15 @@
 
 <div id="upgradeOverlay" class="modal-overlay" hidden>
   <div class="sheet upgrade-sheet" role="dialog" aria-modal="true" aria-labelledby="upgradeTitle">
-    <button type="button" id="upgradeClose" class="icon-btn upgrade-close" aria-label="Đóng">✕</button>
+    <button type="button" id="upgradeClose" class="icon-btn upgrade-close" data-i18n-aria="upgrade.close.aria" aria-label="Đóng">✕</button>
     <div class="upgrade-icon">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20M12 3l-3 6 3 12 3-12z"/></svg>
     </div>
     <h2 id="upgradeTitle" class="upgrade-title">meomoney Premium</h2>
-    <p class="upgrade-limit-notice" id="upgradeLimitNotice" hidden>⚠️ Bạn đã dùng hết 50 lượt nhập miễn phí. Nâng cấp để tiếp tục ghi chép giao dịch.</p>
+    <p class="upgrade-limit-notice" id="upgradeLimitNotice" hidden data-i18n="upgrade.limitNotice">⚠️ Bạn đã dùng hết 50 lượt nhập miễn phí. Nâng cấp để tiếp tục ghi chép giao dịch.</p>
 
     <div id="upgradePlansView">
-      <p class="upgrade-vip-line"><span class="upgrade-vip-crown">👑</span><span class="upgrade-vip-text">Không giới hạn số lần nhập thu chi</span></p>
+      <p class="upgrade-vip-line"><span class="upgrade-vip-crown">👑</span><span class="upgrade-vip-text" data-i18n="upgrade.vipText">Không giới hạn số lần nhập thu chi</span></p>
       <div class="upgrade-plans" id="upgradePlans"></div>
     </div>
 
@@ -488,20 +488,20 @@
         <span id="payPlanName"></span>
         <span id="payPlanPrice"></span>
       </div>
-      <img id="payQrImg" class="pay-qr-img" alt="Mã QR chuyển khoản" width="220" height="220">
+      <img id="payQrImg" class="pay-qr-img" alt="Mã QR chuyển khoản" data-i18n-alt="upgrade.qr.alt" width="220" height="220">
       <div class="pay-info">
-        <div class="pay-info-row"><span>Ngân hàng</span><b>Cake by VPBank</b></div>
-        <div class="pay-info-row"><span>Số tài khoản</span><b>0919248086</b></div>
-        <div class="pay-info-row"><span>Chủ tài khoản</span><b>LA VAN DUNG</b></div>
-        <div class="pay-info-row"><span>Nội dung CK</span><b id="payContent"></b></div>
+        <div class="pay-info-row"><span data-i18n="upgrade.bank">Ngân hàng</span><b>Cake by VPBank</b></div>
+        <div class="pay-info-row"><span data-i18n="upgrade.accountNumber">Số tài khoản</span><b>0919248086</b></div>
+        <div class="pay-info-row"><span data-i18n="upgrade.accountHolder">Chủ tài khoản</span><b>LA VAN DUNG</b></div>
+        <div class="pay-info-row"><span data-i18n="upgrade.transferContent">Nội dung CK</span><b id="payContent"></b></div>
       </div>
-      <p class="pay-hint">Quét mã hoặc chuyển khoản đúng nội dung ở trên. Không cần làm gì thêm — hệ thống tự kiểm tra và kích hoạt Premium.</p>
+      <p class="pay-hint" data-i18n="upgrade.payHint">Quét mã hoặc chuyển khoản đúng nội dung ở trên. Không cần làm gì thêm — hệ thống tự kiểm tra và kích hoạt Premium.</p>
       <p class="pay-status-msg" id="payStatusMsg" hidden></p>
-      <button type="button" id="payBackBtn" class="btn btn-secondary">Quay lại</button>
+      <button type="button" id="payBackBtn" class="btn btn-secondary" data-i18n="upgrade.back">Quay lại</button>
     </div>
 
     <div id="upgradeActiveView" hidden>
-      <div class="upgrade-active-badge">✓ Đang dùng Premium</div>
+      <div class="upgrade-active-badge" data-i18n="upgrade.activeBadge">✓ Đang dùng Premium</div>
       <p class="upgrade-active-desc" id="upgradeActiveDesc"></p>
     </div>
   </div>
@@ -509,125 +509,125 @@
 
 <div id="customFormulaOverlay" class="modal-overlay" hidden>
   <div class="sheet custom-formula-sheet" role="dialog" aria-modal="true" aria-labelledby="customFormulaTitle">
-    <h2 id="customFormulaTitle">Tự đặt công thức</h2>
-    <p class="custom-formula-sub">Thêm các mục và tỉ lệ %, tổng phải đúng 100%.</p>
+    <h2 id="customFormulaTitle" data-i18n="customFormula.title">Tự đặt công thức</h2>
+    <p class="custom-formula-sub" data-i18n="customFormula.sub">Thêm các mục và tỉ lệ %, tổng phải đúng 100%.</p>
     <div id="customFormulaRows" class="custom-formula-rows"></div>
-    <button type="button" id="addCustomRow" class="btn btn-secondary">+ Thêm mục</button>
+    <button type="button" id="addCustomRow" class="btn btn-secondary" data-i18n="customFormula.addItem">+ Thêm mục</button>
     <div class="custom-formula-total">
-      Tổng: <span id="customFormulaTotal">0</span>%
+      <span data-i18n="customFormula.total">Tổng:</span> <span id="customFormulaTotal">0</span>%
     </div>
     <div class="modal-actions">
-      <button type="button" id="customFormulaCancel" class="btn btn-danger">Hủy</button>
-      <button type="button" id="customFormulaSave" class="btn btn-primary" disabled>Lưu</button>
+      <button type="button" id="customFormulaCancel" class="btn btn-danger" data-i18n="customFormula.cancel">Hủy</button>
+      <button type="button" id="customFormulaSave" class="btn btn-primary" disabled data-i18n="customFormula.save">Lưu</button>
     </div>
   </div>
 </div>
 
 <div id="categoryManagerOverlay" class="modal-overlay" hidden>
   <div class="sheet category-manager-sheet" role="dialog" aria-modal="true" aria-labelledby="categoryManagerTitle">
-    <h2 id="categoryManagerTitle">Mục chi tiêu</h2>
+    <h2 id="categoryManagerTitle" data-i18n="catManager.expenseTitle">Mục chi tiêu</h2>
     <div id="categoryManagerList" class="category-manager-list"></div>
     <div class="category-manager-add">
       <input type="text" id="newCatIcon" class="cat-icon-input" maxlength="4" placeholder="🏷️">
-      <input type="text" id="newCatLabel" class="cat-label-input" placeholder="Tên mục mới" maxlength="24">
-      <button type="button" id="newCatSave" class="btn btn-primary cat-add-btn">Thêm</button>
+      <input type="text" id="newCatLabel" class="cat-label-input" placeholder="Tên mục mới" maxlength="24" data-i18n-ph="catManager.namePlaceholder">
+      <button type="button" id="newCatSave" class="btn btn-primary cat-add-btn" data-i18n="catManager.add">Thêm</button>
     </div>
-    <button type="button" id="categoryManagerClose" class="btn btn-secondary">Xong</button>
+    <button type="button" id="categoryManagerClose" class="btn btn-secondary" data-i18n="catManager.done">Xong</button>
   </div>
 </div>
 
 <div id="quickNoteManagerOverlay" class="modal-overlay" hidden>
   <div class="sheet category-manager-sheet" role="dialog" aria-modal="true" aria-labelledby="quickNoteManagerTitle">
-    <h2 id="quickNoteManagerTitle">Ghi chú nhanh</h2>
-    <p class="custom-formula-sub">Chạm 1 lần trong màn hình thêm nhanh là ghi ngay khoản chi với số tiền &amp; mục đã đặt sẵn.</p>
+    <h2 id="quickNoteManagerTitle" data-i18n="quickNote.manager.title">Ghi chú nhanh</h2>
+    <p class="custom-formula-sub" data-i18n="quickNote.manager.sub">Chạm 1 lần trong màn hình thêm nhanh là ghi ngay khoản chi với số tiền &amp; mục đã đặt sẵn.</p>
     <div id="quickNoteManagerList" class="category-manager-list"></div>
     <div class="quick-note-form">
-      <input type="text" id="newQuickNoteInput" class="cat-label-input" placeholder="Tên, vd: Gửi xe" maxlength="24">
-      <input type="text" inputmode="numeric" id="newQuickNoteAmount" class="cat-label-input" placeholder="Số tiền, vd: 5.000">
+      <input type="text" id="newQuickNoteInput" class="cat-label-input" placeholder="Tên, vd: Gửi xe" maxlength="24" data-i18n-ph="quickNote.name.placeholder">
+      <input type="text" inputmode="numeric" id="newQuickNoteAmount" class="cat-label-input" placeholder="Số tiền, vd: 5.000" data-i18n-ph="quickNote.amount.placeholder">
       <select id="newQuickNoteBucket" class="quick-note-bucket-select"></select>
-      <button type="button" id="newQuickNoteSave" class="btn btn-primary cat-add-btn">Thêm ghi chú nhanh</button>
+      <button type="button" id="newQuickNoteSave" class="btn btn-primary cat-add-btn" data-i18n="quickNote.add">Thêm ghi chú nhanh</button>
     </div>
-    <button type="button" id="quickNoteManagerClose" class="btn btn-secondary">Xong</button>
+    <button type="button" id="quickNoteManagerClose" class="btn btn-secondary" data-i18n="catManager.done">Xong</button>
   </div>
 </div>
 
 <div id="goalFormOverlay" class="modal-overlay" hidden>
   <div class="sheet goal-form-sheet" role="dialog" aria-modal="true" aria-labelledby="goalFormTitle">
-    <h2 id="goalFormTitle">Đặt mục tiêu mới</h2>
-    <p class="goal-warning">⚠️ Mục tiêu chỉ mang tính chất quan sát, không giúp bạn kiếm được nhiều tiền hơn.</p>
+    <h2 id="goalFormTitle" data-i18n="goals.formTitle">Đặt mục tiêu mới</h2>
+    <p class="goal-warning" data-i18n="goals.warning">⚠️ Mục tiêu chỉ mang tính chất quan sát, không giúp bạn kiếm được nhiều tiền hơn.</p>
 
     <div class="field">
-      <label for="goalNameInput">Tên mục tiêu</label>
-      <input type="text" id="goalNameInput" placeholder="Vd: Mua xe máy" maxlength="40">
+      <label for="goalNameInput" data-i18n="goals.name">Tên mục tiêu</label>
+      <input type="text" id="goalNameInput" placeholder="Vd: Mua xe máy" maxlength="40" data-i18n-ph="goals.name.placeholder">
     </div>
 
     <div class="field">
-      <label for="goalStagesInput">Số giai đoạn</label>
+      <label for="goalStagesInput" data-i18n="goals.stages">Số giai đoạn</label>
       <input type="number" id="goalStagesInput" min="1" max="10" value="4">
     </div>
 
     <div id="goalStageRows" class="goal-stage-rows"></div>
 
     <div class="field">
-      <label for="goalPledgeInput">Lời cam kết</label>
-      <textarea id="goalPledgeInput" rows="3" placeholder="Viết lời cam kết của bạn... (không thể sửa sau khi lưu)" maxlength="200"></textarea>
+      <label for="goalPledgeInput" data-i18n="goals.pledge">Lời cam kết</label>
+      <textarea id="goalPledgeInput" rows="3" placeholder="Viết lời cam kết của bạn... (không thể sửa sau khi lưu)" maxlength="200" data-i18n-ph="goals.pledge.placeholder"></textarea>
     </div>
 
-    <p class="goal-lock-note">🔒 Sau khi chốt, toàn bộ thông tin (tên, các giai đoạn, lời cam kết) sẽ không thể sửa — chỉ có thể từ bỏ mục tiêu.</p>
+    <p class="goal-lock-note" data-i18n="goals.lockNote">🔒 Sau khi chốt, toàn bộ thông tin (tên, các giai đoạn, lời cam kết) sẽ không thể sửa — chỉ có thể từ bỏ mục tiêu.</p>
 
     <div class="modal-actions">
-      <button type="button" id="goalFormCancel" class="btn btn-danger">Hủy</button>
-      <button type="button" id="goalFormSave" class="btn btn-primary" disabled>Chốt mục tiêu</button>
+      <button type="button" id="goalFormCancel" class="btn btn-danger" data-i18n="goals.cancelBtn">Hủy</button>
+      <button type="button" id="goalFormSave" class="btn btn-primary" disabled data-i18n="goals.confirm">Chốt mục tiêu</button>
     </div>
   </div>
 </div>
 
-<button type="button" id="scrollTopBtn" class="scroll-top-btn" aria-label="Cuộn lên đầu trang">
+<button type="button" id="scrollTopBtn" class="scroll-top-btn" data-i18n-aria="scrollTop.aria" aria-label="Cuộn lên đầu trang">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
 </button>
 
 <div id="onboardingWelcome" class="onboarding-screen" hidden>
   <div class="onboarding-card">
     <span class="onboarding-logo">🐱</span>
-    <h1>MeoMoney xin chào!</h1>
-    <p>Mình là chú mèo quản lý tiền của bạn. Để mình dẫn bạn đi một vòng làm quen nhé!</p>
-    <button type="button" id="onboardingWelcomeNext" class="btn btn-primary onboarding-full-btn">Tiếp theo</button>
+    <h1 data-i18n="onboarding.welcome.title">MeoMoney xin chào!</h1>
+    <p data-i18n="onboarding.welcome.desc">Mình là chú mèo quản lý tiền của bạn. Để mình dẫn bạn đi một vòng làm quen nhé!</p>
+    <button type="button" id="onboardingWelcomeNext" class="btn btn-primary onboarding-full-btn" data-i18n="onboarding.welcome.next">Tiếp theo</button>
   </div>
 </div>
 
 <div id="onboardingSetup" class="onboarding-screen" hidden>
   <div class="onboarding-card">
-    <h1>Thiết lập ban đầu</h1>
+    <h1 data-i18n="onboarding.setup.title">Thiết lập ban đầu</h1>
 
     <div class="setting-block">
-      <div class="setting-title">Tổng tiền hiện có</div>
-      <div class="setting-desc">Nhập đúng số dư bạn đang có — mình sẽ tính từ đây nhé</div>
+      <div class="setting-title" data-i18n="settings.initialBalance">Tổng tiền hiện có</div>
+      <div class="setting-desc" data-i18n="onboarding.setup.balanceDesc">Nhập đúng số dư bạn đang có — mình sẽ tính từ đây nhé</div>
       <input type="text" inputmode="numeric" id="onboardingBalanceInput" class="setting-amount-input-full" placeholder="0 ₫">
     </div>
 
     <div class="setting-block">
-      <div class="setting-title">Ngôn ngữ</div>
-      <div class="pill-options">
-        <button type="button" class="pill-option active" data-lang="vi">Tiếng Việt</button>
-        <button type="button" class="pill-option" disabled>English <span class="pill-option-tag">Sắp ra mắt</span></button>
+      <div class="setting-title" data-i18n="settings.language">Ngôn ngữ</div>
+      <div class="pill-options js-lang-options">
+        <button type="button" class="pill-option active" data-lang="vi" data-i18n="settings.lang.vi">Tiếng Việt</button>
+        <button type="button" class="pill-option" data-lang="en" data-i18n="settings.lang.en">English</button>
       </div>
     </div>
 
     <div class="setting-block">
-      <div class="setting-title">Đơn vị tiền tệ</div>
+      <div class="setting-title" data-i18n="settings.currency">Đơn vị tiền tệ</div>
       <div class="pill-options" id="onboardingCurrencyOptions"></div>
     </div>
 
-    <button type="button" id="onboardingStartBtn" class="btn btn-primary onboarding-full-btn">Bắt đầu khám phá</button>
+    <button type="button" id="onboardingStartBtn" class="btn btn-primary onboarding-full-btn" data-i18n="onboarding.setup.start">Bắt đầu khám phá</button>
   </div>
 </div>
 
 <div id="onboardingDone" class="onboarding-screen" hidden>
   <div class="onboarding-card">
     <span class="onboarding-logo">🎉</span>
-    <h1>Xong rồi!</h1>
-    <p>Bạn đã sẵn sàng quản lý chi tiêu cùng MeoMoney. Chúc bạn luôn rủng rỉnh nhé!</p>
-    <button type="button" id="onboardingDoneBtn" class="btn btn-primary onboarding-full-btn">Bắt đầu dùng app</button>
+    <h1 data-i18n="onboarding.done.title">Xong rồi!</h1>
+    <p data-i18n="onboarding.done.desc">Bạn đã sẵn sàng quản lý chi tiêu cùng MeoMoney. Chúc bạn luôn rủng rỉnh nhé!</p>
+    <button type="button" id="onboardingDoneBtn" class="btn btn-primary onboarding-full-btn" data-i18n="onboarding.done.cta">Bắt đầu dùng app</button>
   </div>
 </div>
 

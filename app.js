@@ -1,25 +1,425 @@
 (() => {
   "use strict";
 
+  /* ---------- ngôn ngữ (i18n) ---------- */
+
+  const LANGUAGE_KEY = "sotuchi.language";
+  let activeLanguage = localStorage.getItem(LANGUAGE_KEY) || "vi";
+
+  // [vi, en] — chỉ đổi ký hiệu hiển thị. Khóa nào không có trong bảng thì t() trả
+  // nguyên văn (dùng cho nhãn do người dùng tự gõ: danh mục/lọ tự tạo, ghi chú...).
+  const T = {
+    // Trang chủ / thẻ sức khỏe tài chính
+    "nav.home.aria": ["Trang chủ", "Home"],
+    "nav.stats.aria": ["Thống kê", "Statistics"],
+    "nav.goals.aria": ["Mục tiêu", "Goals"],
+    "hometab.situation": ["Tình hình", "Overview"],
+    "hometab.formula": ["Công thức", "Formula"],
+    "upgradeBtn.aria": ["Nâng cấp tài khoản", "Upgrade account"],
+    "health.label": ["Sức khỏe tài chính", "Financial health"],
+    "health.badge": ["🏆 Kỷ lục mới", "🏆 New record"],
+    "health.current": ["Hiện tại", "Current"],
+    "health.record": ["Kỷ lục", "Record"],
+    "health.back.text": [
+      "Thanh Sức khỏe Tài chính giúp biểu thị tình trạng tài chính hiện tại so với tổng số tiền kỷ lục của bạn",
+      "The financial health bar shows your current finances compared to your all-time record balance",
+    ],
+    "health.back.tagline": ["\"Liên tục tiến lên\"", "\"Keep moving forward\""],
+    "dash.totalAssets": ["Tổng tài sản", "Total assets"],
+    "dash.today": ["Hôm nay", "Today"],
+    "dash.new": ["Mới", "New"],
+
+    // Công thức
+    "formula.trigger.name": ["Chọn công thức", "Choose a formula"],
+    "formula.trigger.desc": ["Nhấn để xem các công thức chia tiền", "Tap to see money-splitting formulas"],
+    "formula.custom.editTitle": ["Chỉnh sửa", "Edit"],
+    "formula.customRatio": ["Tự đặt tỉ lệ", "Set your own ratio"],
+    "formula.bucketPanelTitle": ["Chia tiền theo công thức", "Split money by formula"],
+    "formula.bucketEmpty": [
+      "Chọn một công thức bên trên để bắt đầu chia tiền quan sát chi tiêu.",
+      "Choose a formula above to start splitting money to track spending.",
+    ],
+    "formula.bucketNote": [
+      "Bảng này chỉ mang tính quan sát, giúp bạn ước lượng chi tiêu theo công thức đã chọn.",
+      "This table is for observation only, to help you estimate spending by the chosen formula.",
+    ],
+    "formula.splittingBy": ["Đang chia theo", "Splitting by"],
+    "formula.month": ["Tháng", "Month"],
+
+    // Tên công thức
+    "formula.name.jars6": ["6 Chiếc Lọ", "6 Jars"],
+    "formula.name.plan503020": ["50/30/20", "50/30/20"],
+    "formula.name.babylon": ["Babylon", "Babylon"],
+    "formula.name.custom": ["Tự quyết", "Custom"],
+
+    // Nhãn các lọ (theo công thức, để tránh trùng ý nghĩa nhưng khác chữ giữa các công thức)
+    "bucket.jars6.nec": ["Thiết yếu", "Essentials"],
+    "bucket.jars6.ffa": ["Tự do tài chính", "Financial freedom"],
+    "bucket.jars6.ltss": ["Tiết kiệm dài hạn", "Long-term savings"],
+    "bucket.jars6.edu": ["Giáo dục", "Education"],
+    "bucket.jars6.play": ["Hưởng thụ", "Enjoyment"],
+    "bucket.jars6.give": ["Cho đi", "Giving"],
+    "bucket.plan503020.need": ["Thiết yếu", "Essentials"],
+    "bucket.plan503020.want": ["Hưởng thụ", "Enjoyment"],
+    "bucket.plan503020.save": ["Tiết kiệm & đầu tư", "Savings & investing"],
+    "bucket.babylon.spend": ["Chi tiêu", "Spending"],
+    "bucket.babylon.save": ["Tiết kiệm", "Savings"],
+    "formula.plan503020.pillDesc.save": ["Tiết kiệm", "Savings"],
+
+    // Mô tả mặt sau của lọ (theo ý nghĩa, dùng chung cho các công thức)
+    "bucket.desc.essentials": ["Chi phí bắt buộc: ăn ở, hóa đơn, đi lại hàng ngày.", "Required costs: rent, bills, daily transport."],
+    "bucket.desc.freedom": ["Đầu tư và tích lũy để tiến tới tự do tài chính.", "Invest and accumulate toward financial freedom."],
+    "bucket.desc.savings": ["Dành riêng cho những mục tiêu dài hạn của bạn.", "Reserved for your long-term goals."],
+    "bucket.desc.education": ["Đầu tư cho kiến thức và kỹ năng của chính bạn.", "Invest in your own knowledge and skills."],
+    "bucket.desc.enjoy": ["Tận hưởng cuộc sống, không cần cảm thấy có lỗi.", "Enjoy life, guilt-free."],
+    "bucket.desc.giving": ["Chia sẻ, giúp đỡ người khác hoặc cộng đồng.", "Share and help others or your community."],
+    "bucket.desc.default": ["Một phần trong kế hoạch chia tiền của bạn.", "Part of your money-splitting plan."],
+
+    // Danh mục chi tiêu
+    "cat.an-uong": ["Ăn uống", "Food & drink"],
+    "cat.di-chuyen": ["Di chuyển", "Transport"],
+    "cat.nha-o": ["Nhà ở", "Housing"],
+    "cat.hoa-don": ["Hóa đơn", "Bills"],
+    "cat.mua-sam": ["Mua sắm", "Shopping"],
+    "cat.giai-tri": ["Giải trí", "Entertainment"],
+    "cat.suc-khoe": ["Sức khỏe", "Health"],
+    "cat.giao-duc": ["Giáo dục", "Education"],
+    "cat.khac-chi": ["Khác", "Other"],
+    // Danh mục thu nhập
+    "cat.luong": ["Lương", "Salary"],
+    "cat.thuong": ["Thưởng", "Bonus"],
+    "cat.dau-tu": ["Đầu tư", "Investment"],
+    "cat.khac-thu": ["Khác", "Other"],
+
+    // Lịch sử giao dịch
+    "tx.history": ["Lịch sử giao dịch", "Transaction history"],
+    "tx.filter.all": ["Tất cả", "All"],
+    "tx.filter.income": ["Thu", "Income"],
+    "tx.filter.expense": ["Chi", "Expense"],
+    "tx.empty": ["Chưa có giao dịch nào", "No transactions yet"],
+    "tx.modalTitle.add": ["Thêm giao dịch", "Add transaction"],
+    "tx.modalTitle.edit": ["Sửa giao dịch", "Edit transaction"],
+    "tx.date": ["Ngày", "Date"],
+    "tx.notePlaceholder": ["Ghi chú...", "Note..."],
+    "tx.backspace.aria": ["Xóa 1 số", "Delete one digit"],
+    "tx.delete": ["Xóa", "Delete"],
+    "tx.save": ["Lưu", "Save"],
+    "tx.typeToggle.aria": ["Đổi khoản thu / khoản chi", "Switch income / expense"],
+
+    // Thống kê
+    "stats.prevMonth.aria": ["Tháng trước", "Previous month"],
+    "stats.nextMonth.aria": ["Tháng sau", "Next month"],
+    "stats.income": ["Thu", "Income"],
+    "stats.expense": ["Chi", "Expense"],
+    "stats.balance": ["Dư", "Balance"],
+    "stats.noData": ["Chưa có dữ liệu", "No data yet"],
+    "stats.donut.expense": ["chi", "expense"],
+    "stats.donut.income": ["thu", "income"],
+
+    // Cài đặt
+    "settings.title": ["Cài đặt", "Settings"],
+    "settings.freePlan": ["Gói Miễn phí", "Free Plan"],
+    "settings.usedEntries": ["Đã dùng", "Used"],
+    "settings.entriesUnit": ["lượt nhập", "entries"],
+    "settings.theme": ["Tông màu chủ đạo", "Primary theme color"],
+    "settings.language": ["Ngôn ngữ", "Language"],
+    "settings.lang.vi": ["Tiếng Việt", "Vietnamese"],
+    "settings.lang.en": ["English", "English"],
+    "settings.currency": ["Đơn vị tiền tệ", "Currency unit"],
+    "settings.currency.desc": [
+      "Chỉ đổi ký hiệu hiển thị, không quy đổi theo tỷ giá thật",
+      "Only changes the displayed symbol, not a real exchange-rate conversion",
+    ],
+    "settings.sound": ["Âm bàn phím", "Keypad sound"],
+    "settings.sound.desc": ["Tiếng gõ khi nhập số tiền", "Tap sound when entering an amount"],
+    "settings.noteOnAdd": ["Ghi chú khi thêm nhanh", "Note field on quick add"],
+    "settings.noteOnAdd.desc": ["Hiện ô ghi chú ngay trên bàn phím", "Show a note field above the keypad"],
+    "settings.quickNote": ["Ghi chú nhanh", "Quick notes"],
+    "settings.quickNote.desc": [
+      "Chạm 1 nút là ghi ngay khoản chi với số tiền & mục đã đặt sẵn",
+      "One tap logs an expense with a preset amount & category",
+    ],
+    "settings.manageQuickNotes": ["Quản lý ghi chú nhanh", "Manage quick notes"],
+    "settings.manageQuickNotes.desc": ["Thêm/xóa các ghi chú thường dùng", "Add/remove frequently used notes"],
+    "settings.incomeCats": ["Mục thu nhập", "Income categories"],
+    "settings.incomeCats.desc": ["Thêm danh mục thu nhập của riêng bạn", "Add your own income categories"],
+    "settings.initialBalance": ["Tổng tiền hiện có", "Total current balance"],
+    "settings.initialBalance.desc": [
+      "Nhập đúng số tiền bạn đang có — hệ thống sẽ chia lại ngay vào các lọ theo công thức đang chọn",
+      "Enter the exact amount you currently have — it'll be re-split into buckets right away",
+    ],
+    "settings.startDate": ["Ngày bắt đầu", "Start date"],
+    "settings.startDate.desc": [
+      "Ngày bạn bắt đầu dùng memoney (tự động ghi nhận, không thể chỉnh sửa)",
+      "The date you started using memoney (auto-recorded, cannot be edited)",
+    ],
+    "settings.yourData": ["Dữ liệu của bạn", "Your data"],
+    "settings.yourData.desc": [
+      "Lưu cục bộ trên máy này, không cần tài khoản, không cần mạng 🔒",
+      "Stored locally on this device — no account, no internet needed 🔒",
+    ],
+    "settings.backup": ["Sao lưu & khôi phục", "Backup & restore"],
+    "settings.backup.desc": [
+      "Xuất ra 1 file rồi tự lưu vào Google Drive/iCloud của bạn. Khi đổi máy hoặc lỡ mất dữ liệu, chỉ cần nhập lại file này.",
+      "Export a file and save it to your Google Drive/iCloud. If you switch devices or lose data, just import this file again.",
+    ],
+    "settings.export": ["Xuất dữ liệu", "Export data"],
+    "settings.import": ["Nhập dữ liệu", "Import data"],
+    "settings.clearData": ["Xóa toàn bộ dữ liệu", "Delete all data"],
+    "settings.shareApp": ["Chia sẻ ứng dụng", "Share app"],
+    "settings.appHub": ["Trung tâm ứng dụng của chúng tôi", "Our app hub"],
+
+    // Mục tiêu
+    "goals.empty": ["Chưa có mục tiêu nào", "No goals yet"],
+    "goals.progress": ["Tiến độ theo thời gian", "Progress over time"],
+    "goals.cancel": ["Từ bỏ mục tiêu", "Abandon goal"],
+    "goals.add": ["+ Đặt mục tiêu mới", "+ Set a new goal"],
+    "goals.formTitle": ["Đặt mục tiêu mới", "Set a new goal"],
+    "goals.warning": [
+      "⚠️ Mục tiêu chỉ mang tính chất quan sát, không giúp bạn kiếm được nhiều tiền hơn.",
+      "⚠️ Goals are for tracking only — they won't help you earn more money.",
+    ],
+    "goals.name": ["Tên mục tiêu", "Goal name"],
+    "goals.name.placeholder": ["Vd: Mua xe máy", "E.g.: Buy a motorbike"],
+    "goals.stages": ["Số giai đoạn", "Number of stages"],
+    "goals.pledge": ["Lời cam kết", "Pledge"],
+    "goals.pledge.placeholder": [
+      "Viết lời cam kết của bạn... (không thể sửa sau khi lưu)",
+      "Write your pledge... (cannot be edited after saving)",
+    ],
+    "goals.lockNote": [
+      "🔒 Sau khi chốt, toàn bộ thông tin (tên, các giai đoạn, lời cam kết) sẽ không thể sửa — chỉ có thể từ bỏ mục tiêu.",
+      "🔒 Once confirmed, everything (name, stages, pledge) can't be edited — you can only abandon the goal.",
+    ],
+    "goals.cancelBtn": ["Hủy", "Cancel"],
+    "goals.confirm": ["Chốt mục tiêu", "Confirm goal"],
+    "goals.stage": ["Giai đoạn", "Stage"],
+    "goals.today": ["Hôm nay", "Today"],
+    "goals.daysPassed": ["Đã qua {n} ngày", "{n} days passed"],
+    "goals.daysLeft": ["Còn {n} ngày", "{n} days left"],
+    "goals.amountPlaceholder": ["Số tiền", "Amount"],
+    "goals.confirmCancel": [
+      "Bạn có chắc muốn từ bỏ mục tiêu này? Không thể hoàn tác.",
+      "Are you sure you want to abandon this goal? This cannot be undone.",
+    ],
+
+    // Nâng cấp / Premium
+    "upgrade.close.aria": ["Đóng", "Close"],
+    "upgrade.limitNotice": [
+      "⚠️ Bạn đã dùng hết 50 lượt nhập miễn phí. Nâng cấp để tiếp tục ghi chép giao dịch.",
+      "⚠️ You've used all 50 free entries. Upgrade to keep logging transactions.",
+    ],
+    "upgrade.vipText": ["Không giới hạn số lần nhập thu chi", "Unlimited income/expense entries"],
+    "upgrade.bestValue": ["Tiết kiệm nhất", "Best value"],
+    "upgrade.qr.alt": ["Mã QR chuyển khoản", "Bank transfer QR code"],
+    "upgrade.bank": ["Ngân hàng", "Bank"],
+    "upgrade.accountNumber": ["Số tài khoản", "Account number"],
+    "upgrade.accountHolder": ["Chủ tài khoản", "Account holder"],
+    "upgrade.transferContent": ["Nội dung CK", "Transfer memo"],
+    "upgrade.payHint": [
+      "Quét mã hoặc chuyển khoản đúng nội dung ở trên. Không cần làm gì thêm — hệ thống tự kiểm tra và kích hoạt Premium.",
+      "Scan the code or transfer with the exact memo above. No need to do anything else — the system auto-checks and activates Premium.",
+    ],
+    "upgrade.back": ["Quay lại", "Go back"],
+    "upgrade.activeBadge": ["✓ Đang dùng Premium", "✓ Premium active"],
+    "upgrade.renewsOn": [" — gia hạn", " — renews"],
+    "upgrade.lifetime": [" — dùng trọn đời", " — lifetime access"],
+    "premium.name": ["Premium — {plan}", "Premium — {plan}"],
+    "premium.unlocked": ["Đã mở khóa toàn bộ tính năng", "All features unlocked"],
+    "premium.usedOf": ["Đã dùng {used}/{limit} lượt nhập", "Used {used}/{limit} entries"],
+    "premium.plan.monthly": ["Gói Tháng", "Monthly Plan"],
+    "premium.plan.monthly.unit": ["/tháng", "/month"],
+    "premium.plan.lifetime": ["Mua đứt", "Lifetime"],
+    "premium.plan.lifetime.unit": ["trọn đời", "lifetime"],
+    "pay.status.pending": [
+      "Sau khi chuyển khoản, hệ thống sẽ tự kiểm tra và kích hoạt Premium — thường mất khoảng 10 phút, bạn không cần làm gì thêm.",
+      "After transferring, the system will auto-check and activate Premium — usually about 10 minutes, no further action needed.",
+    ],
+    "pay.status.waiting": [
+      "Đang chờ xác nhận tự động sau khi bạn chuyển khoản — thường mất khoảng 10 phút, cần có mạng.",
+      "Waiting for automatic confirmation after your transfer — usually about 10 minutes, requires internet.",
+    ],
+    "pay.status.notConfigured": [
+      "Chưa cấu hình kiểm tra tự động (PAYMENT_CHECK_URL trống) — liên hệ hỗ trợ để được kích hoạt thủ công.",
+      "Automatic checking isn't configured — contact support for manual activation.",
+    ],
+    "pay.status.waitingMinutes": [
+      "Đang chờ xác nhận tự động… (đã chờ {mins} phút — hãy giữ app mở hoặc quay lại sau)",
+      "Waiting for automatic confirmation… (waited {mins} min — keep the app open or check back later)",
+    ],
+    "pay.status.retry": ["Không kết nối được để kiểm tra, sẽ tự thử lại…", "Couldn't connect to check, will retry automatically…"],
+    "pay.confirmedAlert": [
+      "Đã xác nhận thanh toán! Cảm ơn bạn đã ủng hộ meomoney — Premium đã được kích hoạt.",
+      "Payment confirmed! Thank you for supporting meomoney — Premium is now active.",
+    ],
+
+    // Sao lưu / khôi phục / chia sẻ
+    "backup.invalidFile": [
+      "File không hợp lệ. Vui lòng chọn đúng file đã xuất từ meomoney.",
+      "Invalid file. Please choose a file exported from meomoney.",
+    ],
+    "backup.confirmImport": [
+      "Việc này sẽ THAY THẾ toàn bộ dữ liệu hiện tại trên máy này bằng dữ liệu trong file đã chọn. Bạn có chắc chắn?",
+      "This will REPLACE all current data on this device with the data in the selected file. Are you sure?",
+    ],
+    "backup.restored": ["Khôi phục dữ liệu thành công!", "Data restored successfully!"],
+    "backup.confirmClear": ["Xóa toàn bộ giao dịch đã lưu? Không thể hoàn tác.", "Delete all saved transactions? This cannot be undone."],
+    "share.linkCopied": ["Đã sao chép đường dẫn ứng dụng!", "App link copied!"],
+    "share.hubComingSoon": ["Trung tâm ứng dụng sắp ra mắt!", "App hub coming soon!"],
+    "share.text": [
+      "memoney — quản lý tài chính đơn giản, riêng tư, không cần tài khoản.",
+      "memoney — simple, private finance tracking, no account needed.",
+    ],
+
+    // Danh mục / ghi chú nhanh (quản lý)
+    "catManager.expenseTitle": ["Mục chi tiêu", "Expense categories"],
+    "catManager.incomeTitle": ["Mục thu nhập", "Income categories"],
+    "catManager.namePlaceholder": ["Tên mục mới", "New category name"],
+    "catManager.add": ["Thêm", "Add"],
+    "catManager.done": ["Xong", "Done"],
+    "catManager.delete.aria": ["Xóa mục", "Delete item"],
+    "quickNote.manager.title": ["Ghi chú nhanh", "Quick notes"],
+    "quickNote.manager.sub": [
+      "Chạm 1 lần trong màn hình thêm nhanh là ghi ngay khoản chi với số tiền & mục đã đặt sẵn.",
+      "One tap on the quick-add screen logs an expense with a preset amount & category.",
+    ],
+    "quickNote.name.placeholder": ["Tên, vd: Gửi xe", "Name, e.g.: Parking"],
+    "quickNote.amount.placeholder": ["Số tiền, vd: 5.000", "Amount, e.g.: 5,000"],
+    "quickNote.add": ["Thêm ghi chú nhanh", "Add quick note"],
+    "quickNote.delete.aria": ["Xóa", "Delete"],
+    "quickNote.other": ["Khác", "Other"],
+    "quickNote.default.parking": ["Gửi xe", "Parking"],
+    "quickNote.default.breakfast": ["Ăn sáng", "Breakfast"],
+    "quickNote.default.lunch": ["Ăn trưa", "Lunch"],
+    "quickNote.default.coffee": ["Cà phê", "Coffee"],
+
+    // Công thức tự đặt
+    "customFormula.title": ["Tự đặt công thức", "Set custom formula"],
+    "customFormula.sub": ["Thêm các mục và tỉ lệ %, tổng phải đúng 100%.", "Add items and % ratios — the total must equal 100%."],
+    "customFormula.addItem": ["+ Thêm mục", "+ Add item"],
+    "customFormula.total": ["Tổng:", "Total:"],
+    "customFormula.cancel": ["Hủy", "Cancel"],
+    "customFormula.save": ["Lưu", "Save"],
+    "customFormula.namePlaceholder": ["Tên mục", "Item name"],
+    "customFormula.delete.aria": ["Xóa mục", "Delete item"],
+
+    // Cuộn lên đầu trang
+    "scrollTop.aria": ["Cuộn lên đầu trang", "Scroll to top"],
+
+    // Onboarding
+    "onboarding.welcome.title": ["MeoMoney xin chào!", "Hello from MeoMoney!"],
+    "onboarding.welcome.desc": [
+      "Mình là chú mèo quản lý tiền của bạn. Để mình dẫn bạn đi một vòng làm quen nhé!",
+      "I'm the cat who'll manage your money. Let me show you around!",
+    ],
+    "onboarding.welcome.next": ["Tiếp theo", "Next"],
+    "onboarding.setup.title": ["Thiết lập ban đầu", "Initial setup"],
+    "onboarding.setup.balanceDesc": [
+      "Nhập đúng số dư bạn đang có — mình sẽ tính từ đây nhé",
+      "Enter the exact balance you currently have — I'll calculate from here",
+    ],
+    "onboarding.setup.start": ["Bắt đầu khám phá", "Start exploring"],
+    "onboarding.done.title": ["Xong rồi!", "All done!"],
+    "onboarding.done.desc": [
+      "Bạn đã sẵn sàng quản lý chi tiêu cùng MeoMoney. Chúc bạn luôn rủng rỉnh nhé!",
+      "You're all set to manage your spending with MeoMoney. Wishing you a fat wallet!",
+    ],
+    "onboarding.done.cta": ["Bắt đầu dùng app", "Start using the app"],
+
+    // Trình hướng dẫn (tour)
+    "tour.health.title": ["Sức khỏe tài chính", "Financial health"],
+    "tour.health.desc": [
+      "Đây là tình trạng sức khỏe tài chính của bạn. Hãy ấn vào để xem giải thích ở mặt sau!",
+      "This is your financial health status. Tap it to see the explanation on the back!",
+    ],
+    "tour.healthBack.title": ["Đây rồi!", "There it is!"],
+    "tour.healthBack.desc": [
+      "Đây là mặt sau của thẻ. Bạn có thể lật qua lật lại bất cứ lúc nào để xem cả 2 mặt nhé.",
+      "This is the back of the card. You can flip it back and forth anytime to see both sides.",
+    ],
+    "tour.continue": ["Tiếp tục", "Continue"],
+    "tour.formulaTab.title": ["Công thức chia tiền", "Money-splitting formula"],
+    "tour.formulaTab.desc": [
+      "Chạm vào 'Công thức' để chuyển sang chế độ phân bổ tiền theo phương pháp bạn thích.",
+      "Tap 'Formula' to switch to money allocation using your preferred method.",
+    ],
+    "tour.formulaTrigger.title": ["Chọn công thức", "Choose a formula"],
+    "tour.formulaTrigger.desc": [
+      "Chạm vào đây để chọn công thức chia tiền phù hợp với bạn — 6 lọ, 50/30/20, Babylon,...",
+      "Tap here to choose the money-splitting formula that suits you — 6 Jars, 50/30/20, Babylon,...",
+    ],
+    "tour.addBtn.title": ["Thêm giao dịch", "Add transaction"],
+    "tour.addBtn.desc": [
+      "Đây là nút chân mèo — chạm vào để bắt đầu ghi lại một khoản thu/chi nhé!",
+      "This is the cat-paw button — tap it to start recording an income/expense entry!",
+    ],
+    "tour.typeToggle.title": ["Đổi Thu / Chi", "Switch Income / Expense"],
+    "tour.typeToggle.desc": [
+      "Chạm vào đây để chuyển đổi giữa khoản Thu (+) và khoản Chi (−).",
+      "Tap here to switch between Income (+) and Expense (−).",
+    ],
+    "tour.save.title": ["Lưu lại", "Save"],
+    "tour.save.desc": [
+      "Nhập một số tiền bất kỳ trên bàn phím, sau đó chạm 'Lưu' để hoàn tất nhé!",
+      "Enter any amount on the keypad, then tap 'Save' to finish!",
+    ],
+
+    // Đơn vị tiền tệ (khóa là chính chữ tiếng Việt gốc, ngoại lệ so với các mục khác)
+    VNĐ: ["VNĐ", "VND"],
+  };
+
+  function t(key) {
+    const row = T[key];
+    if (!row) return key;
+    return row[activeLanguage === "en" ? 1 : 0];
+  }
+
+  function tFormat(key, vars) {
+    let s = t(key);
+    Object.entries(vars).forEach(([k, v]) => {
+      s = s.replace(`{${k}}`, v);
+    });
+    return s;
+  }
+
+  function applyStaticI18n() {
+    document.documentElement.lang = activeLanguage;
+    document.querySelectorAll("[data-i18n]").forEach((el) => {
+      el.textContent = t(el.dataset.i18n);
+    });
+    document.querySelectorAll("[data-i18n-ph]").forEach((el) => {
+      el.setAttribute("placeholder", t(el.dataset.i18nPh));
+    });
+    document.querySelectorAll("[data-i18n-aria]").forEach((el) => {
+      el.setAttribute("aria-label", t(el.dataset.i18nAria));
+    });
+    document.querySelectorAll("[data-i18n-title]").forEach((el) => {
+      el.setAttribute("title", t(el.dataset.i18nTitle));
+    });
+    document.querySelectorAll("[data-i18n-alt]").forEach((el) => {
+      el.setAttribute("alt", t(el.dataset.i18nAlt));
+    });
+  }
+
   const STORAGE_KEY = "sotuchi.transactions.v1";
 
   const CATEGORIES = {
     expense: [
-      { id: "an-uong", label: "Ăn uống", icon: "🍜", color: "#f97316" },
-      { id: "di-chuyen", label: "Di chuyển", icon: "🚗", color: "#0ea5e9" },
-      { id: "nha-o", label: "Nhà ở", icon: "🏠", color: "#8b5cf6" },
-      { id: "hoa-don", label: "Hóa đơn", icon: "🧾", color: "#ef4444" },
-      { id: "mua-sam", label: "Mua sắm", icon: "🛍️", color: "#ec4899" },
-      { id: "giai-tri", label: "Giải trí", icon: "🎮", color: "#14b8a6" },
-      { id: "suc-khoe", label: "Sức khỏe", icon: "💊", color: "#22c55e" },
-      { id: "giao-duc", label: "Giáo dục", icon: "📚", color: "#6366f1" },
-      { id: "khac-chi", label: "Khác", icon: "📦", color: "#64748b" },
+      { id: "an-uong", label: "cat.an-uong", icon: "🍜", color: "#f97316" },
+      { id: "di-chuyen", label: "cat.di-chuyen", icon: "🚗", color: "#0ea5e9" },
+      { id: "nha-o", label: "cat.nha-o", icon: "🏠", color: "#8b5cf6" },
+      { id: "hoa-don", label: "cat.hoa-don", icon: "🧾", color: "#ef4444" },
+      { id: "mua-sam", label: "cat.mua-sam", icon: "🛍️", color: "#ec4899" },
+      { id: "giai-tri", label: "cat.giai-tri", icon: "🎮", color: "#14b8a6" },
+      { id: "suc-khoe", label: "cat.suc-khoe", icon: "💊", color: "#22c55e" },
+      { id: "giao-duc", label: "cat.giao-duc", icon: "📚", color: "#6366f1" },
+      { id: "khac-chi", label: "cat.khac-chi", icon: "📦", color: "#64748b" },
     ],
     income: [
-      { id: "luong", label: "Lương", icon: "💼", color: "#16a34a" },
-      { id: "thuong", label: "Thưởng", icon: "🎁", color: "#0ea5e9" },
-      { id: "dau-tu", label: "Đầu tư", icon: "📈", color: "#8b5cf6" },
-      { id: "khac-thu", label: "Khác", icon: "💵", color: "#64748b" },
+      { id: "luong", label: "cat.luong", icon: "💼", color: "#16a34a" },
+      { id: "thuong", label: "cat.thuong", icon: "🎁", color: "#0ea5e9" },
+      { id: "dau-tu", label: "cat.dau-tu", icon: "📈", color: "#8b5cf6" },
+      { id: "khac-thu", label: "cat.khac-thu", icon: "💵", color: "#64748b" },
     ],
   };
 
@@ -41,36 +441,36 @@
 
   const FORMULAS = {
     jars6: {
-      name: "6 Chiếc Lọ",
+      name: "formula.name.jars6",
       buckets: [
-        { key: "nec", label: "Thiết yếu", pct: 55 },
-        { key: "ffa", label: "Tự do tài chính", pct: 10 },
-        { key: "ltss", label: "Tiết kiệm dài hạn", pct: 10 },
-        { key: "edu", label: "Giáo dục", pct: 10 },
-        { key: "play", label: "Hưởng thụ", pct: 10 },
-        { key: "give", label: "Cho đi", pct: 5 },
+        { key: "nec", label: "bucket.jars6.nec", pct: 55 },
+        { key: "ffa", label: "bucket.jars6.ffa", pct: 10 },
+        { key: "ltss", label: "bucket.jars6.ltss", pct: 10 },
+        { key: "edu", label: "bucket.jars6.edu", pct: 10 },
+        { key: "play", label: "bucket.jars6.play", pct: 10 },
+        { key: "give", label: "bucket.jars6.give", pct: 5 },
       ],
     },
     plan503020: {
-      name: "50/30/20",
+      name: "formula.name.plan503020",
       buckets: [
-        { key: "need", label: "Thiết yếu", pct: 50 },
-        { key: "want", label: "Hưởng thụ", pct: 30 },
-        { key: "save", label: "Tiết kiệm & đầu tư", pct: 20 },
+        { key: "need", label: "bucket.plan503020.need", pct: 50 },
+        { key: "want", label: "bucket.plan503020.want", pct: 30 },
+        { key: "save", label: "bucket.plan503020.save", pct: 20 },
       ],
     },
     babylon: {
-      name: "Babylon",
+      name: "formula.name.babylon",
       buckets: [
-        { key: "spend", label: "Chi tiêu", pct: 90 },
-        { key: "save", label: "Tiết kiệm", pct: 10 },
+        { key: "spend", label: "bucket.babylon.spend", pct: 90 },
+        { key: "save", label: "bucket.babylon.save", pct: 10 },
       ],
     },
-    custom: { name: "Tự quyết", buckets: [] },
+    custom: { name: "formula.name.custom", buckets: [] },
   };
 
   function getFormulaDef(id) {
-    if (id === "custom") return { name: "Tự quyết", buckets: customBuckets };
+    if (id === "custom") return { name: "formula.name.custom", buckets: customBuckets };
     return FORMULAS[id];
   }
 
@@ -160,8 +560,8 @@
   const PREMIUM_KEY = "sotuchi.premium";
   const FREE_LIMIT = 50;
   const PREMIUM_PLANS = {
-    monthly: { name: "Gói Tháng", price: 19000, unitLabel: "/tháng", durationDays: 30 },
-    lifetime: { name: "Mua đứt", price: 199000, unitLabel: "trọn đời", durationDays: null },
+    monthly: { name: "premium.plan.monthly", price: 19000, unitLabel: "premium.plan.monthly.unit", durationDays: 30 },
+    lifetime: { name: "premium.plan.lifetime", price: 199000, unitLabel: "premium.plan.lifetime.unit", durationDays: null },
   };
   let premiumInfo = loadJSON(PREMIUM_KEY, null);
 
@@ -315,6 +715,7 @@
   const amountValueEl = document.getElementById("amountValue");
   const amountCurrencyEl = document.querySelector(".amount-currency");
   const currencyOptionsEl = document.getElementById("currencyOptions");
+  const languageOptionsEl = document.getElementById("languageOptions");
   const keypadEl = document.querySelector(".keypad");
   const backKeyBtn = document.querySelector('.key[data-key="back"]');
 
@@ -505,9 +906,9 @@
       .map(
         ([id, p]) => `
         <button type="button" class="upgrade-plan${id === "lifetime" ? " featured" : ""}" data-plan="${id}">
-          ${id === "lifetime" ? '<span class="upgrade-plan-badge">Tiết kiệm nhất</span>' : ""}
-          <span class="upgrade-plan-name">${p.name}</span>
-          <span class="upgrade-plan-price">${formatCurrency(p.price)}<span class="upgrade-plan-unit">${p.unitLabel}</span></span>
+          ${id === "lifetime" ? `<span class="upgrade-plan-badge">${t("upgrade.bestValue")}</span>` : ""}
+          <span class="upgrade-plan-name">${t(p.name)}</span>
+          <span class="upgrade-plan-price">${formatCurrency(p.price)}<span class="upgrade-plan-unit">${t(p.unitLabel)}</span></span>
         </button>`
       )
       .join("");
@@ -522,12 +923,12 @@
       upgradePlansViewEl.hidden = true;
       upgradeActiveViewEl.hidden = false;
       const plan = PREMIUM_PLANS[premiumInfo.plan];
-      let desc = plan.name;
+      let desc = t(plan.name);
       if (plan.durationDays) {
         const renew = new Date(premiumInfo.purchasedAt + plan.durationDays * 86400000);
-        desc += ` — gia hạn ${String(renew.getDate()).padStart(2, "0")}/${String(renew.getMonth() + 1).padStart(2, "0")}/${renew.getFullYear()}`;
+        desc += `${t("upgrade.renewsOn")} ${String(renew.getDate()).padStart(2, "0")}/${String(renew.getMonth() + 1).padStart(2, "0")}/${renew.getFullYear()}`;
       } else {
-        desc += " — dùng trọn đời";
+        desc += t("upgrade.lifetime");
       }
       upgradeActiveDescEl.textContent = desc;
     } else if (premiumPending) {
@@ -558,14 +959,14 @@
     fillPayView(planId);
     premiumPending = { planId, deviceId: getDeviceId(), since: Date.now() };
     savePremiumPending();
-    setPayStatus("Sau khi chuyển khoản, hệ thống sẽ tự kiểm tra và kích hoạt Premium — thường mất khoảng 10 phút, bạn không cần làm gì thêm.", true);
+    setPayStatus(t("pay.status.pending"), true);
     startPolling();
   }
 
   function fillPayView(planId) {
     const plan = PREMIUM_PLANS[planId];
-    payPlanNameEl.textContent = plan.name;
-    payPlanPriceEl.textContent = `${formatCurrency(plan.price)}${plan.durationDays ? " " + plan.unitLabel : ""}`;
+    payPlanNameEl.textContent = t(plan.name);
+    payPlanPriceEl.textContent = `${formatCurrency(plan.price)}${plan.durationDays ? " " + t(plan.unitLabel) : ""}`;
     payContentEl.textContent = `MEO ${getDeviceId()}`;
     payQrImgEl.src = buildPaymentQrUrl(plan);
   }
@@ -574,7 +975,7 @@
     upgradePlansViewEl.hidden = true;
     upgradePayViewEl.hidden = false;
     fillPayView(premiumPending.planId);
-    setPayStatus("Đang chờ xác nhận tự động sau khi bạn chuyển khoản — thường mất khoảng 10 phút, cần có mạng.", true);
+    setPayStatus(t("pay.status.waiting"), true);
     startPolling();
   }
 
@@ -611,7 +1012,7 @@
     }
 
     if (!PAYMENT_CHECK_URL) {
-      setPayStatus("Chưa cấu hình kiểm tra tự động (PAYMENT_CHECK_URL trống) — liên hệ hỗ trợ để được kích hoạt thủ công.", true);
+      setPayStatus(t("pay.status.notConfigured"), true);
       return;
     }
 
@@ -627,13 +1028,13 @@
         stopPolling();
         renderUpgradeView();
         renderPremiumStatus();
-        alert("Đã xác nhận thanh toán! Cảm ơn bạn đã ủng hộ meomoney — Premium đã được kích hoạt.");
+        alert(t("pay.confirmedAlert"));
       } else {
         const mins = Math.max(1, Math.round((Date.now() - premiumPending.since) / 60000));
-        setPayStatus(`Đang chờ xác nhận tự động… (đã chờ ${mins} phút — hãy giữ app mở hoặc quay lại sau)`, true);
+        setPayStatus(tFormat("pay.status.waitingMinutes", { mins }), true);
       }
     } catch (e) {
-      setPayStatus("Không kết nối được để kiểm tra, sẽ tự thử lại…", true);
+      setPayStatus(t("pay.status.retry"), true);
     }
   }
 
@@ -643,11 +1044,11 @@
     upgradeBtn.hidden = isPremium();
     if (isPremium()) {
       const plan = PREMIUM_PLANS[premiumInfo.plan];
-      premiumStatusTitleEl.textContent = `Premium — ${plan.name}`;
-      premiumStatusDescEl.textContent = "Đã mở khóa toàn bộ tính năng";
+      premiumStatusTitleEl.textContent = tFormat("premium.name", { plan: t(plan.name) });
+      premiumStatusDescEl.textContent = t("premium.unlocked");
     } else {
-      premiumStatusTitleEl.textContent = "Gói Miễn phí";
-      premiumStatusDescEl.textContent = `Đã dùng ${Math.min(transactions.length, FREE_LIMIT)}/${FREE_LIMIT} lượt nhập`;
+      premiumStatusTitleEl.textContent = t("settings.freePlan");
+      premiumStatusDescEl.textContent = tFormat("premium.usedOf", { used: Math.min(transactions.length, FREE_LIMIT), limit: FREE_LIMIT });
     }
   }
 
@@ -724,8 +1125,8 @@
 
   function renderFormulaTab() {
     customFormulaDescEl.textContent = customBuckets.length
-      ? customBuckets.map((b) => `${b.label} ${b.pct}%`).join(" · ")
-      : "Tự đặt tỉ lệ";
+      ? customBuckets.map((b) => `${t(b.label)} ${b.pct}%`).join(" · ")
+      : t("formula.customRatio");
 
     formulaPickerEl.querySelectorAll(".formula-pill").forEach((pill) => {
       pill.classList.toggle("active", pill.dataset.formula === activeFormula);
@@ -741,7 +1142,7 @@
     bucketEmptyEl.hidden = true;
     bucketPanelTitleEl.hidden = false;
     const def = getFormulaDef(activeFormula);
-    bucketPanelTitleEl.textContent = `Đang chia theo ${def.name} · Tháng ${Number(currentRealMonth().slice(5))}`;
+    bucketPanelTitleEl.textContent = `${t("formula.splittingBy")} ${t(def.name)} · ${t("formula.month")} ${Number(currentRealMonth().slice(5))}`;
     const buckets = computeBuckets(activeFormula);
     bucketListEl.innerHTML = def.buckets
       .map((b, i) => {
@@ -749,7 +1150,7 @@
         const negative = bucket.balance < 0;
         const pct = bucket.allocated > 0 ? Math.max(0, Math.min(100, (bucket.balance / bucket.allocated) * 100)) : 0;
         const color = BUCKET_COLORS[i % BUCKET_COLORS.length];
-        const meta = bucketMeta(b.label);
+        const meta = bucketMeta(b.label, b.key);
         return `
           <div class="bucket-item" style="--bucket-color:${color}">
             <div class="bucket-item-inner">
@@ -757,7 +1158,7 @@
                 <div class="bucket-item-icon">${meta.icon}</div>
                 <div class="bucket-item-body">
                   <div class="bucket-item-top">
-                    <span class="bucket-item-name">${b.label} · ${b.pct}%</span>
+                    <span class="bucket-item-name">${t(b.label)} · ${b.pct}%</span>
                     <span class="bucket-item-amount${negative ? " negative" : ""}">${formatCurrency(bucket.balance)}</span>
                   </div>
                   <div class="bucket-item-track">
@@ -778,7 +1179,27 @@
 
   const BUCKET_COLORS = ["#16a34a", "#0ea5e9", "#f59e0b", "#a855f7", "#ec4899", "#14b8a6", "#f97316", "#6366f1"];
 
-  function bucketMeta(label) {
+  // Các lọ có sẵn (6 lọ / 50-30-20 / Babylon) được nhận diện qua "key" cố định
+  // (không đổi theo ngôn ngữ). Lọ tự tạo (custom) không có key thuộc nhóm này nên
+  // sẽ rơi xuống phần đoán theo từ khóa tiếng Việt trong nhãn người dùng tự gõ.
+  const BUCKET_META_BY_KEY = {
+    nec: { icon: "🏠", descKey: "bucket.desc.essentials" },
+    need: { icon: "🏠", descKey: "bucket.desc.essentials" },
+    spend: { icon: "🏠", descKey: "bucket.desc.essentials" },
+    ffa: { icon: "📈", descKey: "bucket.desc.freedom" },
+    ltss: { icon: "🏦", descKey: "bucket.desc.savings" },
+    save: { icon: "🏦", descKey: "bucket.desc.savings" },
+    edu: { icon: "📚", descKey: "bucket.desc.education" },
+    play: { icon: "🎉", descKey: "bucket.desc.enjoy" },
+    want: { icon: "🎉", descKey: "bucket.desc.enjoy" },
+    give: { icon: "🤝", descKey: "bucket.desc.giving" },
+  };
+
+  function bucketMeta(label, key) {
+    if (key && BUCKET_META_BY_KEY[key]) {
+      const m = BUCKET_META_BY_KEY[key];
+      return { icon: m.icon, desc: t(m.descKey) };
+    }
     const l = label.toLowerCase();
     if (l.includes("thiết yếu") || l.includes("chi tiêu"))
       return { icon: "🏠", desc: "Chi phí bắt buộc: ăn ở, hóa đơn, đi lại hàng ngày." };
@@ -792,7 +1213,7 @@
       return { icon: "🎉", desc: "Tận hưởng cuộc sống, không cần cảm thấy có lỗi." };
     if (l.includes("cho đi"))
       return { icon: "🤝", desc: "Chia sẻ, giúp đỡ người khác hoặc cộng đồng." };
-    return { icon: "💳", desc: "Một phần trong kế hoạch chia tiền của bạn." };
+    return { icon: "💳", desc: t("bucket.desc.default") };
   }
 
   // Khoản chi giờ dùng "lọ" của công thức làm danh mục — hàm này tra icon/nhãn/màu
@@ -805,7 +1226,7 @@
       const idx = def ? def.buckets.findIndex((b) => b.key === key) : -1;
       if (idx !== -1) {
         const b = def.buckets[idx];
-        return { id: b.key, label: b.label, icon: bucketMeta(b.label).icon, color: BUCKET_COLORS[idx % BUCKET_COLORS.length] };
+        return { id: b.key, label: b.label, icon: bucketMeta(b.label, b.key).icon, color: BUCKET_COLORS[idx % BUCKET_COLORS.length] };
       }
     }
     return findCategory("expense", tx.category);
@@ -814,8 +1235,8 @@
   function updateFormulaTrigger() {
     if (!activeFormula) {
       formulaTriggerIconEl.textContent = "🧮";
-      formulaTriggerNameEl.textContent = "Chọn công thức";
-      formulaTriggerDescEl.textContent = "Nhấn để xem các công thức chia tiền";
+      formulaTriggerNameEl.textContent = t("formula.trigger.name");
+      formulaTriggerDescEl.textContent = t("formula.trigger.desc");
       return;
     }
     const pill = formulaPickerEl.querySelector(`.formula-pill[data-formula="${activeFormula}"]`);
@@ -873,9 +1294,9 @@
     rowEl.className = "custom-formula-row";
     rowEl.dataset.key = row.key || uid();
     rowEl.innerHTML = `
-      <input type="text" class="cf-label" placeholder="Tên mục" value="${escapeHtml(row.label || "")}">
+      <input type="text" class="cf-label" placeholder="${t("customFormula.namePlaceholder")}" value="${escapeHtml(row.label || "")}">
       <input type="number" class="cf-pct" min="0" max="100" value="${row.pct || ""}">
-      <button type="button" class="custom-formula-row-remove" aria-label="Xóa mục">✕</button>
+      <button type="button" class="custom-formula-row-remove" aria-label="${t("customFormula.delete.aria")}">✕</button>
     `;
     customFormulaRowsEl.appendChild(rowEl);
   }
@@ -945,10 +1366,10 @@
   if (!Array.isArray(quickNotes) || (quickNotes.length && typeof quickNotes[0] === "string")) {
     // chưa có dữ liệu, hoặc dữ liệu kiểu cũ (chuỗi thuần, chưa gắn số tiền/mục) -> khởi tạo bộ mặc định mới
     quickNotes = [
-      { label: "Gửi xe", amount: 5000, category: "nec" },
-      { label: "Ăn sáng", amount: 20000, category: "nec" },
-      { label: "Ăn trưa", amount: 35000, category: "nec" },
-      { label: "Cà phê", amount: 25000, category: "play" },
+      { label: "quickNote.default.parking", amount: 5000, category: "nec" },
+      { label: "quickNote.default.breakfast", amount: 20000, category: "nec" },
+      { label: "quickNote.default.lunch", amount: 35000, category: "nec" },
+      { label: "quickNote.default.coffee", amount: 25000, category: "play" },
     ];
   }
 
@@ -967,8 +1388,8 @@
   function quickNoteBucketInfo(qn) {
     const def = getFormulaDef(activeFormula);
     const b = def && def.buckets.find((bb) => bb.key === qn.category);
-    if (b) return { icon: bucketMeta(b.label).icon, label: b.label };
-    return { icon: "🏷️", label: "Khác" };
+    if (b) return { icon: bucketMeta(b.label, b.key).icon, label: b.label };
+    return { icon: "🏷️", label: "quickNote.other" };
   }
 
   function renderQuickNoteStrip() {
@@ -977,7 +1398,7 @@
         const info = quickNoteBucketInfo(qn);
         return `<button type="button" class="quick-note-chip" data-index="${i}">
           <span class="quick-note-chip-icon">${info.icon}</span>
-          <span class="quick-note-chip-text">${escapeHtml(qn.label)}</span>
+          <span class="quick-note-chip-text">${escapeHtml(t(qn.label))}</span>
           <span class="quick-note-chip-amount">${formatCurrency(qn.amount)}</span>
         </button>`;
       })
@@ -997,7 +1418,7 @@
     setModalType("expense", qn.category);
     amountBuffer = String(qn.amount);
     txCategoryInput.value = qn.category;
-    commitTransaction(qn.label);
+    commitTransaction(t(qn.label));
   });
 
   renderQuickNoteStrip();
@@ -1007,7 +1428,7 @@
   function renderQuickNoteBucketOptions() {
     const def = getFormulaDef(activeFormula);
     newQuickNoteBucketSelect.innerHTML = def.buckets
-      .map((b) => `<option value="${b.key}">${bucketMeta(b.label).icon} ${escapeHtml(b.label)}</option>`)
+      .map((b) => `<option value="${b.key}">${bucketMeta(b.label, b.key).icon} ${escapeHtml(t(b.label))}</option>`)
       .join("");
   }
 
@@ -1030,8 +1451,8 @@
         return `
         <div class="cat-manager-row" data-index="${i}">
           <span class="cat-manager-icon">${info.icon}</span>
-          <span class="cat-manager-label">${escapeHtml(qn.label)} · ${formatCurrency(qn.amount)} · ${escapeHtml(info.label)}</span>
-          <button type="button" class="cat-manager-remove" aria-label="Xóa">✕</button>
+          <span class="cat-manager-label">${escapeHtml(t(qn.label))} · ${formatCurrency(qn.amount)} · ${escapeHtml(t(info.label))}</span>
+          <button type="button" class="cat-manager-remove" aria-label="${t("quickNote.delete.aria")}">✕</button>
         </div>`;
       })
       .join("");
@@ -1074,9 +1495,16 @@
   });
 
   clearDataBtn.addEventListener("click", () => {
-    if (!confirm("Xóa toàn bộ giao dịch đã lưu? Không thể hoàn tác.")) return;
+    if (!confirm(t("backup.confirmClear"))) return;
     transactions = [];
     saveTransactions(transactions);
+    initialBalance = 0;
+    localStorage.removeItem(INITIAL_BALANCE_KEY);
+    monthlyBaselineSplit = {};
+    saveMonthlyBaselineSplit();
+    goal = null;
+    saveGoal();
+    localStorage.removeItem(ONBOARDING_KEY);
     renderAll();
     showView("home");
   });
@@ -1117,10 +1545,10 @@
         data = parsed && typeof parsed.data === "object" ? parsed.data : parsed;
         if (!data || typeof data !== "object") throw new Error("invalid");
       } catch (e) {
-        alert("File không hợp lệ. Vui lòng chọn đúng file đã xuất từ meomoney.");
+        alert(t("backup.invalidFile"));
         return;
       }
-      if (!confirm("Việc này sẽ THAY THẾ toàn bộ dữ liệu hiện tại trên máy này bằng dữ liệu trong file đã chọn. Bạn có chắc chắn?")) return;
+      if (!confirm(t("backup.confirmImport"))) return;
       for (let i = localStorage.length - 1; i >= 0; i--) {
         const key = localStorage.key(i);
         if (key && key.startsWith("sotuchi.")) localStorage.removeItem(key);
@@ -1128,7 +1556,7 @@
       Object.entries(data).forEach(([key, value]) => {
         if (key.startsWith("sotuchi.")) localStorage.setItem(key, value);
       });
-      alert("Khôi phục dữ liệu thành công!");
+      alert(t("backup.restored"));
       window.location.reload();
     };
     reader.readAsText(file);
@@ -1182,7 +1610,7 @@
 
   function renderCurrencyOptions() {
     currencyOptionsEl.innerHTML = Object.entries(CURRENCIES)
-      .map(([id, c]) => `<button type="button" class="pill-option${id === activeCurrency ? " active" : ""}" data-currency="${id}">${c.symbol} ${c.label}</button>`)
+      .map(([id, c]) => `<button type="button" class="pill-option${id === activeCurrency ? " active" : ""}" data-currency="${id}">${c.symbol} ${t(c.label)}</button>`)
       .join("");
   }
 
@@ -1198,6 +1626,38 @@
 
   renderCurrencyOptions();
   applyCurrencySymbol();
+
+  /* ---------- ngôn ngữ ---------- */
+
+  function renderLanguageOptions() {
+    document.querySelectorAll(".js-lang-options").forEach((el) => {
+      el.querySelectorAll("[data-lang]").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.lang === activeLanguage);
+      });
+    });
+  }
+
+  function setLanguage(lang) {
+    if (lang === activeLanguage) return;
+    activeLanguage = lang;
+    localStorage.setItem(LANGUAGE_KEY, lang);
+    applyStaticI18n();
+    renderLanguageOptions();
+    renderCurrencyOptions();
+    renderOnboardingCurrencyOptions();
+    updateMonthLabel();
+    renderAll();
+  }
+
+  document.querySelectorAll(".js-lang-options").forEach((el) => {
+    el.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-lang]");
+      if (!btn || btn.disabled) return;
+      setLanguage(btn.dataset.lang);
+    });
+  });
+  applyStaticI18n();
+  renderLanguageOptions();
 
   /* ---------- tổng tiền hiện có (đặt lại tổng tài sản, tự chia theo công thức) ---------- */
 
@@ -1234,7 +1694,7 @@
   shareAppBtn.addEventListener("click", async () => {
     const shareData = {
       title: "memoney",
-      text: "memoney — quản lý tài chính đơn giản, riêng tư, không cần tài khoản.",
+      text: t("share.text"),
       url: window.location.href,
     };
     if (navigator.share) {
@@ -1247,7 +1707,7 @@
     }
     try {
       await navigator.clipboard.writeText(shareData.url);
-      alert("Đã sao chép đường dẫn ứng dụng!");
+      alert(t("share.linkCopied"));
     } catch (e) {
       alert(shareData.url);
     }
@@ -1259,7 +1719,7 @@
 
   appHubBtn.addEventListener("click", () => {
     if (!APP_HUB_URL || APP_HUB_URL === "#") {
-      alert("Trung tâm ứng dụng sắp ra mắt!");
+      alert(t("share.hubComingSoon"));
       return;
     }
     window.open(APP_HUB_URL, "_blank", "noopener");
@@ -1271,7 +1731,7 @@
 
   function openCategoryManager(type) {
     categoryManagerType = type;
-    categoryManagerTitleEl.textContent = type === "expense" ? "Mục chi tiêu" : "Mục thu nhập";
+    categoryManagerTitleEl.textContent = type === "expense" ? t("catManager.expenseTitle") : t("catManager.incomeTitle");
     newCatIconInput.value = "";
     newCatLabelInput.value = "";
     renderCategoryManagerList();
@@ -1290,8 +1750,8 @@
         (c) => `
         <div class="cat-manager-row" data-id="${c.id}">
           <span class="cat-manager-icon">${c.icon}</span>
-          <span class="cat-manager-label">${escapeHtml(c.label)}</span>
-          ${customIds.has(c.id) ? `<button type="button" class="cat-manager-remove" aria-label="Xóa mục">✕</button>` : ""}
+          <span class="cat-manager-label">${escapeHtml(t(c.label))}</span>
+          ${customIds.has(c.id) ? `<button type="button" class="cat-manager-remove" aria-label="${t("catManager.delete.aria")}">✕</button>` : ""}
         </div>`
       )
       .join("");
@@ -1376,7 +1836,7 @@
 
   function updateMonthLabel() {
     const [y, m] = currentMonth.split("-");
-    monthLabelTextEl.textContent = `Tháng ${Number(m)} · ${y}`;
+    monthLabelTextEl.textContent = `${t("formula.month")} ${Number(m)} · ${y}`;
   }
 
   monthInput.value = currentMonth;
@@ -1440,7 +1900,7 @@
       if (growthPct === null) {
         if (todayNet !== 0) {
           el.hidden = false;
-          el.textContent = "Mới";
+          el.textContent = t("dash.new");
           el.className = "dash-growth js-today-growth new";
         } else {
           el.hidden = true;
@@ -1498,7 +1958,7 @@
       li.innerHTML = `
         <div class="tx-icon" style="background:${cat.color}22">${cat.icon}</div>
         <div class="tx-main">
-          <div class="tx-category">${cat.label}</div>
+          <div class="tx-category">${t(cat.label)}</div>
           ${tx.note ? `<div class="tx-note">${escapeHtml(tx.note)}</div>` : ""}
         </div>
         <div class="tx-side">
@@ -1591,14 +2051,14 @@
     ctx.fillText(formatCurrency(total), cx, cy - 8);
     ctx.font = "600 11px 'Segoe UI', sans-serif";
     ctx.fillStyle = "#6b7280";
-    ctx.fillText(donutType === "expense" ? "chi" : "thu", cx, cy + 12);
+    ctx.fillText(t(donutType === "expense" ? "stats.donut.expense" : "stats.donut.income"), cx, cy + 12);
 
     for (const e of entries) {
       const pct = ((e.value / total) * 100).toFixed(1);
       const li = document.createElement("li");
       li.innerHTML = `
         <span class="legend-dot" style="background:${e.cat.color}"></span>
-        <span class="legend-name">${e.cat.icon} ${e.cat.label}</span>
+        <span class="legend-name">${e.cat.icon} ${t(e.cat.label)}</span>
         <span class="legend-value">${formatCurrency(e.value)}</span>
         <span class="legend-pct">${pct}%</span>
       `;
@@ -1773,9 +2233,10 @@
   /* ---------- category strip ---------- */
 
   function catChipHtml(id, icon, label, active) {
-    return `<button type="button" class="cat-chip${active ? " active" : ""}" data-id="${id}" title="${label}">
+    const text = t(label);
+    return `<button type="button" class="cat-chip${active ? " active" : ""}" data-id="${id}" title="${escapeHtml(text)}">
       <span class="cat-chip-icon">${icon}</span>
-      <span class="cat-chip-label">${escapeHtml(label)}</span>
+      <span class="cat-chip-label">${escapeHtml(text)}</span>
     </button>`;
   }
 
@@ -1784,7 +2245,7 @@
       const buckets = getFormulaDef(activeFormula).buckets;
       const sel = selectedId && buckets.some((b) => b.key === selectedId) ? selectedId : buckets[0] ? buckets[0].key : "";
       catStripEl.innerHTML = buckets
-        .map((b) => catChipHtml(b.key, bucketMeta(b.label).icon, b.label, b.key === sel))
+        .map((b) => catChipHtml(b.key, bucketMeta(b.label, b.key).icon, b.label, b.key === sel))
         .join("");
       txCategoryInput.value = sel;
       return;
@@ -1863,7 +2324,7 @@
     }
     txForm.reset();
     if (tx) {
-      modalTitle.textContent = "Sửa giao dịch";
+      modalTitle.textContent = t("tx.modalTitle.edit");
       txIdInput.value = tx.id;
       setModalType(tx.type, tx.category);
       setAmount(tx.amount);
@@ -1873,7 +2334,7 @@
       noteFieldEl.hidden = false;
       deleteBtn.hidden = false;
     } else {
-      modalTitle.textContent = "Thêm giao dịch";
+      modalTitle.textContent = t("tx.modalTitle.add");
       txIdInput.value = "";
       setModalType("expense");
       setAmount("");
@@ -2051,9 +2512,9 @@
       .map(
         (s, i) => `
         <div class="goal-stage-row" data-index="${i}">
-          <div class="goal-stage-row-label">Giai đoạn ${i + 1}</div>
+          <div class="goal-stage-row-label">${t("goals.stage")} ${i + 1}</div>
           <div class="goal-stage-row-fields">
-            <input type="text" inputmode="numeric" class="goal-stage-amount" placeholder="Số tiền" value="${s.amount ? Number(s.amount).toLocaleString("vi-VN") : ""}">
+            <input type="text" inputmode="numeric" class="goal-stage-amount" placeholder="${t("goals.amountPlaceholder")}" value="${s.amount ? Number(s.amount).toLocaleString("vi-VN") : ""}">
             <input type="date" class="goal-stage-date" value="${s.date || ""}">
           </div>
         </div>`
@@ -2170,14 +2631,18 @@
         const pct = Math.max(0, Math.min(100, ((stageDate - start) / totalMs) * 100));
         const reached = now >= stageDate.getTime();
         const daysLeft = Math.ceil((stageDate.getTime() - now) / 86400000);
-        const daysText = reached ? `Đã qua ${Math.abs(daysLeft)} ngày` : daysLeft === 0 ? "Hôm nay" : `Còn ${daysLeft} ngày`;
+        const daysText = reached
+          ? tFormat("goals.daysPassed", { n: Math.abs(daysLeft) })
+          : daysLeft === 0
+          ? t("goals.today")
+          : tFormat("goals.daysLeft", { n: daysLeft });
         // chừa 36px ở 2 đầu để thẻ giai đoạn (cao hơn 1 điểm) không tràn ra ngoài, đè lên nút bên dưới
         const rowTop = `calc(36px + (${pct} / 100) * (100% - 72px))`;
         return `
         <div class="goal-dot-row${reached ? " reached" : ""}" style="top:${rowTop}">
           <span class="goal-dot"></span>
           <span class="goal-dot-label">
-            <span class="goal-dot-stage">Giai đoạn ${i + 1}</span>
+            <span class="goal-dot-stage">${t("goals.stage")} ${i + 1}</span>
             <span class="goal-dot-amount">${formatCurrency(s.amount)}</span>
             <span class="goal-dot-date">${formatDate(s.date)} · ${daysText}</span>
           </span>
@@ -2187,7 +2652,7 @@
   }
 
   goalCancelBtn.addEventListener("click", () => {
-    if (!confirm("Bạn có chắc muốn từ bỏ mục tiêu này? Không thể hoàn tác.")) return;
+    if (!confirm(t("goals.confirmCancel"))) return;
     goal = null;
     saveGoal();
     renderGoals();
@@ -2218,7 +2683,7 @@
 
   function renderOnboardingCurrencyOptions() {
     onboardingCurrencyOptionsEl.innerHTML = Object.entries(CURRENCIES)
-      .map(([id, c]) => `<button type="button" class="pill-option${id === activeCurrency ? " active" : ""}" data-currency="${id}">${c.symbol} ${c.label}</button>`)
+      .map(([id, c]) => `<button type="button" class="pill-option${id === activeCurrency ? " active" : ""}" data-currency="${id}">${c.symbol} ${t(c.label)}</button>`)
       .join("");
   }
 
@@ -2260,14 +2725,12 @@
   /* ---------- trình hướng dẫn (spotlight tour) ---------- */
 
   let tourMatEls = [];
-  let tourRingEl = null;
   let tourTooltipEl = null;
   let tourResizeHandler = null;
 
   function teardownTourUI() {
     tourMatEls.forEach((el) => el.remove());
     tourMatEls = [];
-    if (tourRingEl) { tourRingEl.remove(); tourRingEl = null; }
     if (tourTooltipEl) { tourTooltipEl.remove(); tourTooltipEl = null; }
     if (tourResizeHandler) { window.removeEventListener("resize", tourResizeHandler); tourResizeHandler = null; }
   }
@@ -2291,8 +2754,6 @@
     matBottom.style.cssText = `top:${rect.bottom}px; left:0; width:${vw}px; height:${Math.max(0, vh - rect.bottom)}px;`;
     matLeft.style.cssText = `top:${rect.top}px; left:0; width:${Math.max(0, rect.left)}px; height:${rect.height}px;`;
     matRight.style.cssText = `top:${rect.top}px; left:${rect.right}px; width:${Math.max(0, vw - rect.right)}px; height:${rect.height}px;`;
-
-    tourRingEl.style.cssText = `top:${rect.top}px; left:${rect.left}px; width:${rect.width}px; height:${rect.height}px;`;
 
     const tooltipWidth = Math.min(300, vw - 32);
     tourTooltipEl.style.width = `${tooltipWidth}px`;
@@ -2318,10 +2779,6 @@
       document.body.appendChild(d);
       tourMatEls.push(d);
     }
-    tourRingEl = document.createElement("div");
-    tourRingEl.className = "tour-ring";
-    document.body.appendChild(tourRingEl);
-
     tourTooltipEl = document.createElement("div");
     tourTooltipEl.className = "tour-tooltip";
     tourTooltipEl.innerHTML = `
@@ -2353,54 +2810,36 @@
     const formulaTabBtn = document.querySelector('[data-hometab="formula"]');
     const steps = [
       () =>
-        showTourStep(
-          healthCardEl,
-          "Sức khỏe tài chính",
-          "Chạm vào đây để xem tình trạng tài chính của bạn. Mẹo nhỏ: có thể lật thẻ để xem giải thích ở mặt sau đó!",
-          { onAdvance: () => setTimeout(steps[1], 500) }
-        ),
+        showTourStep(healthCardEl, t("tour.health.title"), t("tour.health.desc"), {
+          onAdvance: () => setTimeout(steps[1], 500),
+        }),
       () =>
-        showTourStep(
-          healthCardEl,
-          "Đây rồi!",
-          "Đây là mặt sau của thẻ. Bạn có thể lật qua lật lại bất cứ lúc nào để xem cả 2 mặt nhé.",
-          { buttonLabel: "Tiếp tục", onAdvance: () => steps[2]() }
-        ),
+        showTourStep(healthCardEl, t("tour.healthBack.title"), t("tour.healthBack.desc"), {
+          buttonLabel: t("tour.continue"),
+          onAdvance: () => steps[2](),
+        }),
       () =>
-        showTourStep(
-          formulaTabBtn,
-          "Công thức chia tiền",
-          "Chạm vào 'Công thức' để chuyển sang chế độ phân bổ tiền theo phương pháp bạn thích.",
-          { onAdvance: () => setTimeout(steps[3], 400) }
-        ),
+        showTourStep(formulaTabBtn, t("tour.formulaTab.title"), t("tour.formulaTab.desc"), {
+          onAdvance: () => setTimeout(steps[3], 400),
+        }),
       () =>
-        showTourStep(
-          formulaTriggerBtn,
-          "Chọn công thức",
-          "Chạm vào đây để chọn công thức chia tiền phù hợp với bạn — 6 lọ, 50/30/20, Babylon,...",
-          { onAdvance: () => setTimeout(steps[4], 400) }
-        ),
+        showTourStep(formulaTriggerBtn, t("tour.formulaTrigger.title"), t("tour.formulaTrigger.desc"), {
+          onAdvance: () => setTimeout(steps[4], 400),
+        }),
       () =>
-        showTourStep(
-          addBtn,
-          "Thêm giao dịch",
-          "Đây là nút chân mèo — chạm vào để bắt đầu ghi lại một khoản thu/chi nhé!",
-          { onAdvance: () => setTimeout(steps[5], 500) }
-        ),
+        showTourStep(addBtn, t("tour.addBtn.title"), t("tour.addBtn.desc"), {
+          onAdvance: () => setTimeout(steps[5], 500),
+        }),
       () =>
-        showTourStep(
-          typeToggleBtn,
-          "Đổi Thu / Chi",
-          "Chạm vào đây để chuyển đổi giữa khoản Thu (+) và khoản Chi (−).",
-          { onAdvance: () => setTimeout(steps[6], 350) }
-        ),
+        showTourStep(typeToggleBtn, t("tour.typeToggle.title"), t("tour.typeToggle.desc"), {
+          onAdvance: () => setTimeout(steps[6], 350),
+        }),
       () =>
-        showTourStep(
-          txForm,
-          "Lưu lại",
-          "Nhập một số tiền bất kỳ trên bàn phím, sau đó chạm 'Lưu' để hoàn tất nhé!",
-          { eventTarget: document, eventName: "tx:saved", onAdvance: () => finishOnboarding() }
-        ),
+        showTourStep(txForm, t("tour.save.title"), t("tour.save.desc"), {
+          eventTarget: document,
+          eventName: "tx:saved",
+          onAdvance: () => finishOnboarding(),
+        }),
     ];
     steps[0]();
   }

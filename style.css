@@ -695,10 +695,10 @@ body {
 .nav-add {
   position: absolute;
   left: 50%;
-  bottom: max(14px, calc(4px + env(safe-area-inset-bottom)));
+  bottom: max(10px, calc(env(safe-area-inset-bottom)));
   transform: translateX(-50%);
-  width: 64px;
-  height: 64px;
+  width: 78px;
+  height: 78px;
   border-radius: 0;
   border: none;
   background: transparent;
@@ -710,8 +710,8 @@ body {
   transition: transform 0.15s;
 }
 .nav-add svg {
-  width: 58px;
-  height: 58px;
+  width: 70px;
+  height: 70px;
   filter: drop-shadow(0 8px 10px color-mix(in srgb, var(--primary) 55%, transparent));
 }
 .nav-add:active { transform: translateX(-50%) scale(0.92); }
@@ -1360,6 +1360,7 @@ body {
   cursor: pointer;
 }
 .upgrade-icon {
+  flex-shrink: 0;
   width: 56px;
   height: 56px;
   border-radius: 50%;
@@ -1371,7 +1372,7 @@ body {
   margin-bottom: 10px;
   box-shadow: 0 8px 20px rgba(99, 102, 241, 0.35);
 }
-.upgrade-icon svg { width: 28px; height: 28px; }
+.upgrade-icon svg { width: 28px; height: 28px; flex-shrink: 0; }
 .upgrade-title {
   margin: 0 0 2px;
   font-size: 1.2rem;
@@ -1481,6 +1482,7 @@ body {
   margin-bottom: 14px;
 }
 .pay-qr-img {
+  flex-shrink: 0;
   width: 220px;
   height: 220px;
   border-radius: var(--radius-md);
@@ -2184,14 +2186,6 @@ body {
   position: fixed;
   background: rgba(10, 20, 15, 0.62);
   z-index: 400;
-}
-.tour-ring {
-  position: fixed;
-  z-index: 401;
-  border: 3px solid #fff;
-  box-shadow: 0 0 0 4px var(--primary), 0 0 26px rgba(255, 255, 255, 0.65);
-  border-radius: 18px;
-  pointer-events: none;
 }
 .tour-tooltip {
   position: fixed;
