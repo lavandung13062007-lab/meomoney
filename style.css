@@ -1897,6 +1897,18 @@ body {
   box-shadow: 0 0 10px color-mix(in srgb, var(--primary) 40%, transparent);
   transition: width 1s cubic-bezier(0.22, 1, 0.36, 1);
 }
+.goal-progress-amounts {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+.goal-progress-amounts #goalCurrentAmount { color: var(--primary); }
+.goal-progress-amounts .goal-progress-sep,
+.goal-progress-amounts #goalTargetAmount { color: var(--text-muted); font-weight: 700; }
 
 .goal-timeline {
   position: relative;
