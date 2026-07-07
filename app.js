@@ -149,6 +149,8 @@
   const INITIAL_BALANCE_KEY = "sotuchi.initialBalance";
   let initialBalance = Number(localStorage.getItem(INITIAL_BALANCE_KEY)) || 0;
 
+  const ONBOARDING_KEY = "sotuchi.onboarded";
+
   let activeFormula = localStorage.getItem(ACTIVE_FORMULA_KEY);
   const needsDefaultFormula = !activeFormula;
   if (needsDefaultFormula) activeFormula = "jars6";
@@ -428,6 +430,15 @@
   const customFormulaCancelBtn = document.getElementById("customFormulaCancel");
 
   const scrollTopBtn = document.getElementById("scrollTopBtn");
+
+  const onboardingWelcomeEl = document.getElementById("onboardingWelcome");
+  const onboardingWelcomeNextBtn = document.getElementById("onboardingWelcomeNext");
+  const onboardingSetupEl = document.getElementById("onboardingSetup");
+  const onboardingBalanceInput = document.getElementById("onboardingBalanceInput");
+  const onboardingCurrencyOptionsEl = document.getElementById("onboardingCurrencyOptions");
+  const onboardingStartBtn = document.getElementById("onboardingStartBtn");
+  const onboardingDoneEl = document.getElementById("onboardingDone");
+  const onboardingDoneBtn = document.getElementById("onboardingDoneBtn");
 
   let modalType = "expense";
 
@@ -1971,6 +1982,7 @@
     currentMonth = data.date.slice(0, 7);
     monthInput.value = currentMonth;
     renderAll();
+    document.dispatchEvent(new CustomEvent("tx:saved"));
     return true;
   }
 
@@ -2202,9 +2214,209 @@
 
   if (needsDefaultFormula) saveActiveFormula();
 
+  /* ---------- onboarding lần đầu mở app ---------- */
+
+  function renderOnboardingCurrencyOptions() {
+    onboardingCurrencyOptionsEl.innerHTML = Object.entries(CURRENCIES)
+      .map(([id, c]) => `<button type="button" class="pill-option${id === activeCurrency ? " active" : ""}" data-currency="${id}">${c.symbol} ${c.label}</button>`)
+      .join("");
+  }
+
+  onboardingCurrencyOptionsEl.addEventListener("click", (e) => {
+    const btn = e.target.closest(".pill-option");
+    if (!btn) return;
+    activeCurrency = btn.dataset.currency;
+    localStorage.setItem(CURRENCY_KEY, activeCurrency);
+    renderOnboardingCurrencyOptions();
+    renderCurrencyOptions();
+    applyCurrencySymbol();
+  });
+
+  onboardingBalanceInput.addEventListener("input", () => {
+    const digits = onboardingBalanceInput.value.replace(/\D/g, "");
+    onboardingBalanceInput.value = digits ? Number(digits).toLocaleString("vi-VN") : "";
+  });
+
+  onboardingWelcomeNextBtn.addEventListener("click", () => {
+    onboardingWelcomeEl.hidden = true;
+    renderOnboardingCurrencyOptions();
+    onboardingSetupEl.hidden = false;
+  });
+
+  onboardingStartBtn.addEventListener("click", () => {
+    const entered = Number(onboardingBalanceInput.value.replace(/\D/g, "")) || 0;
+    initialBalance = entered;
+    localStorage.setItem(INITIAL_BALANCE_KEY, String(initialBalance));
+    if (entered) addMonthlyBaselineSplit(entered);
+    renderAll();
+    onboardingSetupEl.hidden = true;
+    startTour();
+  });
+
+  onboardingDoneBtn.addEventListener("click", () => {
+    onboardingDoneEl.hidden = true;
+  });
+
+  /* ---------- trình hướng dẫn (spotlight tour) ---------- */
+
+  let tourMatEls = [];
+  let tourRingEl = null;
+  let tourTooltipEl = null;
+  let tourResizeHandler = null;
+
+  function teardownTourUI() {
+    tourMatEls.forEach((el) => el.remove());
+    tourMatEls = [];
+    if (tourRingEl) { tourRingEl.remove(); tourRingEl = null; }
+    if (tourTooltipEl) { tourTooltipEl.remove(); tourTooltipEl = null; }
+    if (tourResizeHandler) { window.removeEventListener("resize", tourResizeHandler); tourResizeHandler = null; }
+  }
+
+  function positionTourUI(target) {
+    const r = target.getBoundingClientRect();
+    const pad = 6;
+    const rect = {
+      top: r.top - pad,
+      left: r.left - pad,
+      right: r.right + pad,
+      bottom: r.bottom + pad,
+      width: r.width + pad * 2,
+      height: r.height + pad * 2,
+    };
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
+    const [matTop, matBottom, matLeft, matRight] = tourMatEls;
+    matTop.style.cssText = `top:0; left:0; width:${vw}px; height:${Math.max(0, rect.top)}px;`;
+    matBottom.style.cssText = `top:${rect.bottom}px; left:0; width:${vw}px; height:${Math.max(0, vh - rect.bottom)}px;`;
+    matLeft.style.cssText = `top:${rect.top}px; left:0; width:${Math.max(0, rect.left)}px; height:${rect.height}px;`;
+    matRight.style.cssText = `top:${rect.top}px; left:${rect.right}px; width:${Math.max(0, vw - rect.right)}px; height:${rect.height}px;`;
+
+    tourRingEl.style.cssText = `top:${rect.top}px; left:${rect.left}px; width:${rect.width}px; height:${rect.height}px;`;
+
+    const tooltipWidth = Math.min(300, vw - 32);
+    tourTooltipEl.style.width = `${tooltipWidth}px`;
+    const spaceBelow = vh - rect.bottom;
+    const spaceAbove = rect.top;
+    let top;
+    if (spaceBelow >= 170 || spaceBelow >= spaceAbove) {
+      top = Math.min(rect.bottom + 16, vh - 16 - tourTooltipEl.offsetHeight);
+    } else {
+      top = Math.max(16, rect.top - 16 - tourTooltipEl.offsetHeight);
+    }
+    let left = r.left + r.width / 2 - tooltipWidth / 2;
+    left = Math.max(16, Math.min(left, vw - tooltipWidth - 16));
+    tourTooltipEl.style.top = `${Math.max(16, top)}px`;
+    tourTooltipEl.style.left = `${left}px`;
+  }
+
+  function showTourStep(target, title, desc, opts = {}) {
+    teardownTourUI();
+    for (let i = 0; i < 4; i++) {
+      const d = document.createElement("div");
+      d.className = "tour-mat";
+      document.body.appendChild(d);
+      tourMatEls.push(d);
+    }
+    tourRingEl = document.createElement("div");
+    tourRingEl.className = "tour-ring";
+    document.body.appendChild(tourRingEl);
+
+    tourTooltipEl = document.createElement("div");
+    tourTooltipEl.className = "tour-tooltip";
+    tourTooltipEl.innerHTML = `
+      <div class="tour-tooltip-title">${title}</div>
+      <div class="tour-tooltip-desc">${desc}</div>
+      ${opts.buttonLabel ? `<button type="button" class="btn btn-primary tour-tooltip-btn">${opts.buttonLabel}</button>` : ""}
+    `;
+    document.body.appendChild(tourTooltipEl);
+
+    positionTourUI(target);
+    tourResizeHandler = () => positionTourUI(target);
+    window.addEventListener("resize", tourResizeHandler);
+
+    const advance = () => {
+      teardownTourUI();
+      opts.onAdvance();
+    };
+
+    if (opts.buttonLabel) {
+      tourTooltipEl.querySelector(".tour-tooltip-btn").addEventListener("click", advance);
+    } else if (opts.eventTarget) {
+      opts.eventTarget.addEventListener(opts.eventName || "click", advance, { once: true });
+    } else {
+      target.addEventListener("click", advance, { once: true });
+    }
+  }
+
+  function startTour() {
+    const formulaTabBtn = document.querySelector('[data-hometab="formula"]');
+    const steps = [
+      () =>
+        showTourStep(
+          healthCardEl,
+          "Sức khỏe tài chính",
+          "Chạm vào đây để xem tình trạng tài chính của bạn. Mẹo nhỏ: có thể lật thẻ để xem giải thích ở mặt sau đó!",
+          { onAdvance: () => setTimeout(steps[1], 500) }
+        ),
+      () =>
+        showTourStep(
+          healthCardEl,
+          "Đây rồi!",
+          "Đây là mặt sau của thẻ. Bạn có thể lật qua lật lại bất cứ lúc nào để xem cả 2 mặt nhé.",
+          { buttonLabel: "Tiếp tục", onAdvance: () => steps[2]() }
+        ),
+      () =>
+        showTourStep(
+          formulaTabBtn,
+          "Công thức chia tiền",
+          "Chạm vào 'Công thức' để chuyển sang chế độ phân bổ tiền theo phương pháp bạn thích.",
+          { onAdvance: () => setTimeout(steps[3], 400) }
+        ),
+      () =>
+        showTourStep(
+          formulaTriggerBtn,
+          "Chọn công thức",
+          "Chạm vào đây để chọn công thức chia tiền phù hợp với bạn — 6 lọ, 50/30/20, Babylon,...",
+          { onAdvance: () => setTimeout(steps[4], 400) }
+        ),
+      () =>
+        showTourStep(
+          addBtn,
+          "Thêm giao dịch",
+          "Đây là nút chân mèo — chạm vào để bắt đầu ghi lại một khoản thu/chi nhé!",
+          { onAdvance: () => setTimeout(steps[5], 500) }
+        ),
+      () =>
+        showTourStep(
+          typeToggleBtn,
+          "Đổi Thu / Chi",
+          "Chạm vào đây để chuyển đổi giữa khoản Thu (+) và khoản Chi (−).",
+          { onAdvance: () => setTimeout(steps[6], 350) }
+        ),
+      () =>
+        showTourStep(
+          txForm,
+          "Lưu lại",
+          "Nhập một số tiền bất kỳ trên bàn phím, sau đó chạm 'Lưu' để hoàn tất nhé!",
+          { eventTarget: document, eventName: "tx:saved", onAdvance: () => finishOnboarding() }
+        ),
+    ];
+    steps[0]();
+  }
+
+  function finishOnboarding() {
+    localStorage.setItem(ONBOARDING_KEY, "1");
+    onboardingDoneEl.hidden = false;
+  }
+
   renderAll();
   showView("home");
-  openModal(null);
+  if (!localStorage.getItem(ONBOARDING_KEY)) {
+    onboardingWelcomeEl.hidden = false;
+  } else {
+    openModal(null);
+  }
 })();
 
 if ("serviceWorker" in navigator) {

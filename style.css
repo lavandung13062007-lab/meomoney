@@ -2145,3 +2145,68 @@ body {
 @media (max-width: 420px) {
   .home-tab { padding: 6px 9px; font-size: 0.76rem; }
 }
+
+/* Onboarding lần đầu mở app */
+.onboarding-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  padding-top: calc(24px + env(safe-area-inset-top));
+  padding-bottom: calc(24px + env(safe-area-inset-bottom));
+}
+.onboarding-screen[hidden] { display: none; }
+.onboarding-card {
+  width: 100%;
+  max-width: 380px;
+  max-height: 100%;
+  overflow-y: auto;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border);
+  padding: 32px 26px;
+  text-align: center;
+}
+.onboarding-card h1 { font-size: 1.3rem; margin: 0 0 10px; }
+.onboarding-card p { color: var(--text-muted); font-size: 0.92rem; line-height: 1.55; margin: 0 0 4px; }
+.onboarding-logo { font-size: 3.2rem; display: block; margin-bottom: 14px; }
+.onboarding-card .setting-block { text-align: left; }
+.onboarding-card .setting-block:last-of-type { border-bottom: none; }
+.onboarding-full-btn { width: 100%; margin-top: 24px; }
+
+/* Trình hướng dẫn (spotlight tour) */
+.tour-mat {
+  position: fixed;
+  background: rgba(10, 20, 15, 0.62);
+  z-index: 400;
+}
+.tour-ring {
+  position: fixed;
+  z-index: 401;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 4px var(--primary), 0 0 26px rgba(255, 255, 255, 0.65);
+  border-radius: 18px;
+  pointer-events: none;
+}
+.tour-tooltip {
+  position: fixed;
+  z-index: 402;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 16px 18px;
+  text-align: left;
+}
+.tour-tooltip-title {
+  font-weight: 800;
+  font-size: 0.98rem;
+  margin-bottom: 6px;
+  color: var(--primary);
+}
+.tour-tooltip-desc { font-size: 0.86rem; color: var(--text); line-height: 1.5; }
+.tour-tooltip-btn { width: 100%; margin-top: 12px; }
