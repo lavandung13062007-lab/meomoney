@@ -899,6 +899,7 @@
     situationTabEl.hidden = tab !== "situation";
     formulaTabEl.hidden = tab !== "formula";
     homeTabButtons.forEach((btn) => btn.classList.toggle("active", btn.dataset.hometab === tab));
+    renderHome(); // đảm bảo các thẻ số dư ở tab vừa hiện ra được đo/thu nhỏ đúng kích thước
   }
 
   homeTabButtons.forEach((btn) => {
@@ -1934,6 +1935,18 @@
 
   /* ---------- home dashboard ---------- */
 
+  // Số dư lớn/nhiều chữ số có thể tràn khỏi thẻ (đặc biệt trên màn hình hẹp) — tự thu nhỏ chữ để luôn vừa một dòng
+  function shrinkToFit(el) {
+    el.style.fontSize = "";
+    const baseSize = parseFloat(getComputedStyle(el).fontSize);
+    const minSize = baseSize * 0.55;
+    let size = baseSize;
+    while (el.scrollWidth > el.clientWidth + 1 && size > minSize) {
+      size -= 1;
+      el.style.fontSize = `${size}px`;
+    }
+  }
+
   function renderHome() {
     const { current, record, todayNet, growthPct, healthPct } = computeFinance();
     const zone = healthZone(healthPct);
@@ -1945,15 +1958,19 @@
     healthCurrentEl.textContent = formatCurrency(current);
     healthRecordEl.textContent = formatCurrency(record);
     healthBadge.hidden = !(record > 0 && current >= record);
+    shrinkToFit(healthCurrentEl);
+    shrinkToFit(healthRecordEl);
 
     totalAssetsEls.forEach((el) => {
       el.textContent = formatCurrency(current);
       el.style.color = current < 0 ? "var(--expense)" : "var(--text)";
+      shrinkToFit(el);
     });
 
     todayChangeEls.forEach((el) => {
       el.textContent = `${todayNet >= 0 ? "+" : "−"} ${formatCurrency(Math.abs(todayNet))}`;
       el.style.color = todayNet >= 0 ? "var(--income)" : "var(--expense)";
+      shrinkToFit(el);
     });
 
     todayGrowthEls.forEach((el) => {
@@ -2735,6 +2752,7 @@
   window.addEventListener("resize", () => {
     renderChart();
     renderTrendChart();
+    renderHome(); // đo lại kích thước chữ các ô số dư khi khung hình đổi (xoay màn hình, thay đổi cỡ cửa sổ)
   });
 
   if (needsDefaultFormula) saveActiveFormula();
