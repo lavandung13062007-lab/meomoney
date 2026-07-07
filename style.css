@@ -703,6 +703,7 @@ body {
   border-radius: 0;
   border: none;
   background: transparent;
+  color: var(--primary);
   padding: 0;
   cursor: pointer;
   display: flex;
@@ -1069,6 +1070,9 @@ body {
   color: var(--text-muted);
 }
 .setting-amount-input-full { font-weight: 700; }
+.setting-amount-btn { text-align: left; cursor: pointer; }
+.balance-sheet h2 { margin: 0 0 6px; font-size: 1.05rem; text-align: center; }
+.balance-sheet .keypad { margin-top: 0; margin-bottom: 12px; }
 .setting-amount-input-full:focus,
 .setting-date-input-full:focus {
   outline: none;
@@ -1489,8 +1493,20 @@ body {
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
   background: var(--surface);
+  margin-bottom: 10px;
+}
+.pay-qr-save-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: auto;
+  padding: 9px 18px;
+  font-size: 0.85rem;
   margin-bottom: 14px;
 }
+.pay-qr-save-btn svg { width: 16px; height: 16px; }
 .pay-info {
   width: 100%;
   background: var(--surface-2);

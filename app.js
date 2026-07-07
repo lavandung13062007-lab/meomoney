@@ -212,6 +212,7 @@
     "upgrade.vipText": ["Không giới hạn số lần nhập thu chi", "Unlimited income/expense entries"],
     "upgrade.bestValue": ["Tiết kiệm nhất", "Best value"],
     "upgrade.qr.alt": ["Mã QR chuyển khoản", "Bank transfer QR code"],
+    "upgrade.saveQr": ["Lưu ảnh QR", "Save QR image"],
     "upgrade.bank": ["Ngân hàng", "Bank"],
     "upgrade.accountNumber": ["Số tài khoản", "Account number"],
     "upgrade.accountHolder": ["Chủ tài khoản", "Account holder"],
@@ -753,7 +754,12 @@
   const importDataFile = document.getElementById("importDataFile");
   const themeSwatchesEl = document.getElementById("themeSwatches");
   const startDateDisplayEl = document.getElementById("startDateDisplay");
-  const initialBalanceInput = document.getElementById("initialBalanceInput");
+  const initialBalanceDisplay = document.getElementById("initialBalanceDisplay");
+  const balanceOverlay = document.getElementById("balanceOverlay");
+  const balanceKeypadEl = document.getElementById("balanceKeypad");
+  const balanceSheetValueEl = document.getElementById("balanceSheetValue");
+  const balanceSheetCancelBtn = document.getElementById("balanceSheetCancel");
+  const balanceSheetSaveBtn = document.getElementById("balanceSheetSave");
   const shareAppBtn = document.getElementById("shareAppBtn");
   const appHubBtn = document.getElementById("appHubBtn");
   const openIncomeCatBtn = document.getElementById("openIncomeCatBtn");
@@ -988,6 +994,26 @@
   payBackBtn.addEventListener("click", () => {
     upgradePayViewEl.hidden = true;
     upgradePlansViewEl.hidden = false;
+  });
+
+  // Tải ảnh QR về máy; nếu fetch bị chặn CORS thì mở ảnh ở tab mới để lưu tay
+  const payQrSaveBtn = document.getElementById("payQrSaveBtn");
+  payQrSaveBtn.addEventListener("click", async () => {
+    try {
+      const res = await fetch(payQrImgEl.src);
+      if (!res.ok) throw new Error("fetch failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `meomoney-qr-${getDeviceId()}.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+    } catch (_) {
+      window.open(payQrImgEl.src, "_blank");
+    }
   });
 
   function startPolling() {
@@ -1605,7 +1631,7 @@
   function applyCurrencySymbol() {
     const cur = CURRENCIES[activeCurrency] || CURRENCIES.vnd;
     document.querySelectorAll(".amount-currency").forEach((el) => { el.textContent = cur.symbol; });
-    initialBalanceInput.placeholder = `0 ${cur.symbol}`;
+    syncInitialBalanceDisplay();
   }
 
   function renderCurrencyOptions() {
@@ -1662,22 +1688,56 @@
   /* ---------- tổng tiền hiện có (đặt lại tổng tài sản, tự chia theo công thức) ---------- */
 
   function syncInitialBalanceDisplay() {
-    if (document.activeElement === initialBalanceInput) return; // không ghi đè khi người dùng đang gõ
     const { current } = computeFinance();
-    initialBalanceInput.value = current ? current.toLocaleString("vi-VN") : "";
+    const cur = CURRENCIES[activeCurrency] || CURRENCIES.vnd;
+    initialBalanceDisplay.textContent = `${(current || 0).toLocaleString("vi-VN")} ${cur.symbol}`;
   }
 
-  initialBalanceInput.addEventListener("input", () => {
-    const digits = initialBalanceInput.value.replace(/\D/g, "");
-    initialBalanceInput.value = digits ? Number(digits).toLocaleString("vi-VN") : "";
+  // Ô này mở bàn phím riêng của app (bàn phím hệ điều hành không bật được trên một số máy/PWA)
+  let balanceBuffer = "";
+
+  function renderBalanceSheetAmount() {
+    balanceSheetValueEl.textContent = Number(balanceBuffer || "0").toLocaleString("vi-VN");
+  }
+
+  initialBalanceDisplay.addEventListener("click", () => {
+    const { current } = computeFinance();
+    balanceBuffer = current > 0 ? String(current) : "";
+    renderBalanceSheetAmount();
+    balanceOverlay.hidden = false;
   });
-  initialBalanceInput.addEventListener("change", () => {
-    const entered = Number(initialBalanceInput.value.replace(/\D/g, "")) || 0;
+
+  balanceKeypadEl.addEventListener("click", (e) => {
+    const btn = e.target.closest(".key");
+    if (!btn) return;
+    playKeyClick();
+    const key = btn.dataset.key;
+    if (key === "back") {
+      balanceBuffer = balanceBuffer.slice(0, -1);
+    } else if (key === "000") {
+      if (balanceBuffer) balanceBuffer = (balanceBuffer + "000").slice(0, MAX_AMOUNT_DIGITS);
+    } else {
+      if (balanceBuffer.length >= MAX_AMOUNT_DIGITS) return;
+      balanceBuffer = (balanceBuffer === "0" ? "" : balanceBuffer) + key;
+    }
+    renderBalanceSheetAmount();
+  });
+
+  balanceSheetCancelBtn.addEventListener("click", () => {
+    balanceOverlay.hidden = true;
+  });
+  balanceOverlay.addEventListener("click", (e) => {
+    if (e.target === balanceOverlay) balanceOverlay.hidden = true;
+  });
+
+  balanceSheetSaveBtn.addEventListener("click", () => {
+    const entered = Number(balanceBuffer || "0");
     const { current: before } = computeFinance();
     const netSoFar = transactions.reduce((s, t) => s + (t.type === "income" ? t.amount : -t.amount), 0);
     initialBalance = entered - netSoFar; // để tổng tài sản hiện tại = đúng số vừa nhập
     localStorage.setItem(INITIAL_BALANCE_KEY, String(initialBalance));
     if (activeFormula) addMonthlyBaselineSplit(entered - before); // tự chia phần chênh lệch vào các lọ của tháng này
+    balanceOverlay.hidden = true;
     renderAll();
   });
 
