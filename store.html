@@ -92,14 +92,127 @@
     min-height: 1.2em;
   }
 
+  .stats {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    min-height: 1.2em;
+  }
+  .stats strong { color: var(--text); }
+
+  .rating {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding-top: 4px;
+  }
+  .rating-label {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+  }
+  .stars {
+    display: flex;
+    gap: 4px;
+  }
+  .star {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px;
+    font-size: 1.9rem;
+    line-height: 1;
+    color: #d8dfda;
+    transition: transform 0.15s ease, color 0.15s ease;
+  }
+  .star:active { transform: scale(0.9); }
+  .star.filled { color: #f5b301; }
+
+  .comments {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-top: 8px;
+    border-top: 1px solid #e4ece6;
+    text-align: left;
+  }
+  .comments h2 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 800;
+  }
+  .comment-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .comment-input,
+  .comment-textarea {
+    width: 100%;
+    border: 1.5px solid #dbe6df;
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    color: var(--text);
+    background: var(--surface);
+  }
+  .comment-input:focus,
+  .comment-textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+  }
+  .comment-textarea {
+    resize: vertical;
+    min-height: 60px;
+  }
+  .comment-submit {
+    align-self: flex-end;
+    padding: 10px 18px;
+    width: auto;
+    font-size: 0.9rem;
+  }
+  .comment-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .comment-item {
+    background: var(--surface);
+    border-radius: 14px;
+    padding: 10px 12px;
+  }
+  .comment-name {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .comment-text {
+    font-size: 0.88rem;
+    color: var(--text);
+    margin-top: 2px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .comment-empty {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
   .overlay {
     position: fixed;
     inset: 0;
     background: rgba(20, 38, 28, 0.55);
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
-    padding: 20px;
+    padding: max(56px, calc(28px + env(safe-area-inset-top))) 20px 20px;
+    overflow-y: auto;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.2s ease;
@@ -151,11 +264,36 @@
   <img class="icon" src="icons/icon-512.png" alt="MeoMoney" />
   <h1>MeoMoney</h1>
 
+  <div id="stats" class="stats" style="display:none;"></div>
+
   <div class="actions">
     <button id="installBtn" class="btn btn-primary">Cài đặt</button>
     <a id="openBtn" class="btn btn-link" href="https://meomoney.vercel.app/" style="text-decoration:none; display:none;">Mở ứng dụng</a>
   </div>
   <div id="hint" class="hint"></div>
+
+  <div class="rating">
+    <div id="ratingLabel" class="rating-label">Bạn thấy MeoMoney thế nào?</div>
+    <div id="stars" class="stars">
+      <button class="star" data-value="1">★</button>
+      <button class="star" data-value="2">★</button>
+      <button class="star" data-value="3">★</button>
+      <button class="star" data-value="4">★</button>
+      <button class="star" data-value="5">★</button>
+    </div>
+  </div>
+
+  <div class="comments">
+    <h2>Bình luận</h2>
+    <div class="comment-form">
+      <input id="commentName" class="comment-input" type="text" maxlength="40" placeholder="Tên của bạn (không bắt buộc)" />
+      <textarea id="commentText" class="comment-textarea" maxlength="300" placeholder="Viết bình luận về MeoMoney..."></textarea>
+      <button id="commentSubmit" class="btn btn-primary comment-submit">Gửi</button>
+    </div>
+    <div id="commentList" class="comment-list">
+      <div class="comment-empty">Chưa có bình luận nào.</div>
+    </div>
+  </div>
 </div>
 
 <div id="videoOverlay" class="overlay">
@@ -172,6 +310,7 @@
 <script>
   const APP_URL = "https://meomoney.vercel.app/";
   const IOS_TUTORIAL_VIDEO = "videos/ios-install.mp4";
+  const STORE_STATS_URL = "https://script.google.com/macros/s/AKfycbzGlQVuYVsHQZKaO_GQO5VMHYuMkmWqihlK2YItpGgTybbPs1zaGh6Bi5Y0TNkeDAfR/exec";
 
   const ua = navigator.userAgent;
   const isIOS = /iPad|iPhone|iPod/.test(ua) || (ua.includes("Macintosh") && navigator.maxTouchPoints > 1);
@@ -180,10 +319,111 @@
   const installBtn = document.getElementById("installBtn");
   const openBtn = document.getElementById("openBtn");
   const hint = document.getElementById("hint");
+  const statsEl = document.getElementById("stats");
+  const ratingLabel = document.getElementById("ratingLabel");
+  const starButtons = Array.from(document.querySelectorAll(".star"));
+  const commentNameEl = document.getElementById("commentName");
+  const commentTextEl = document.getElementById("commentText");
+  const commentSubmitEl = document.getElementById("commentSubmit");
+  const commentListEl = document.getElementById("commentList");
   const videoOverlay = document.getElementById("videoOverlay");
   const closeOverlay = document.getElementById("closeOverlay");
   const tutorialVideo = document.getElementById("tutorialVideo");
   const videoPlaceholder = document.getElementById("videoPlaceholder");
+
+  const DEVICE_ID_KEY = "sotuchi.deviceId";
+  function getDeviceId() {
+    let id = localStorage.getItem(DEVICE_ID_KEY);
+    if (!id) {
+      id = Math.random().toString(36).slice(2, 8).toUpperCase();
+      localStorage.setItem(DEVICE_ID_KEY, id);
+    }
+    return id;
+  }
+
+  function renderStats(data) {
+    if (!data) return;
+    const parts = [];
+    if (data.ratingCount > 0) parts.push(`⭐ <strong>${data.avgRating}</strong> (${data.ratingCount} đánh giá)`);
+    if (data.downloads > 0) parts.push(`<strong>${data.downloads}</strong> lượt tải`);
+    if (parts.length) {
+      statsEl.innerHTML = parts.join(" · ");
+      statsEl.style.display = "flex";
+    }
+    if (data.comments) renderComments(data.comments);
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function renderComments(comments) {
+    if (!comments.length) {
+      commentListEl.innerHTML = '<div class="comment-empty">Chưa có bình luận nào.</div>';
+      return;
+    }
+    commentListEl.innerHTML = comments
+      .map((c) => {
+        const ten = escapeHtml(c.ten || "Người dùng ẩn danh");
+        const noiDung = escapeHtml(c.noiDung || "");
+        return `<div class="comment-item"><div class="comment-name">${ten}</div><div class="comment-text">${noiDung}</div></div>`;
+      })
+      .join("");
+  }
+
+  function highlightStars(value) {
+    starButtons.forEach((btn) => {
+      btn.classList.toggle("filled", Number(btn.dataset.value) <= value);
+    });
+  }
+
+  const MY_RATING_KEY = "sotuchi.myRating";
+  const myRating = Number(localStorage.getItem(MY_RATING_KEY) || 0);
+  if (myRating > 0) {
+    highlightStars(myRating);
+    ratingLabel.textContent = "Cảm ơn bạn đã đánh giá!";
+  }
+
+  function callStoreStats(params) {
+    if (!STORE_STATS_URL) return Promise.resolve(null);
+    const query = new URLSearchParams(params).toString();
+    return fetch(`${STORE_STATS_URL}?${query}`)
+      .then((res) => res.json())
+      .catch(() => null);
+  }
+
+  callStoreStats({}).then(renderStats);
+
+  starButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const value = Number(btn.dataset.value);
+      highlightStars(value);
+      localStorage.setItem(MY_RATING_KEY, String(value));
+      ratingLabel.textContent = "Cảm ơn bạn đã đánh giá!";
+      callStoreStats({ action: "rate", deviceId: getDeviceId(), stars: value }).then(renderStats);
+    });
+  });
+
+  function logDownload() {
+    callStoreStats({ action: "download", deviceId: getDeviceId() }).then(renderStats);
+  }
+
+  commentSubmitEl.addEventListener("click", () => {
+    const text = commentTextEl.value.trim();
+    if (!text) return;
+    const name = commentNameEl.value.trim();
+    commentSubmitEl.disabled = true;
+    callStoreStats({ action: "comment", deviceId: getDeviceId(), name, text })
+      .then((data) => {
+        renderStats(data);
+        commentTextEl.value = "";
+      })
+      .finally(() => {
+        commentSubmitEl.disabled = false;
+      });
+  });
 
   let deferredPrompt = null;
   window.addEventListener("beforeinstallprompt", (e) => {
@@ -202,8 +442,12 @@
       videoOverlay.classList.add("open");
       if (IOS_TUTORIAL_VIDEO) tutorialVideo.play().catch(() => {});
     });
+    document.querySelector('.sheet a[href="https://meomoney.vercel.app/"]').addEventListener("click", () => {
+      logDownload();
+    });
   } else if (isAndroid) {
     installBtn.addEventListener("click", async () => {
+      logDownload();
       if (deferredPrompt) {
         deferredPrompt.prompt();
         await deferredPrompt.userChoice;
@@ -215,6 +459,7 @@
   } else {
     installBtn.textContent = "Mở ứng dụng";
     installBtn.addEventListener("click", () => {
+      logDownload();
       window.location.href = APP_URL;
     });
   }
