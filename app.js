@@ -167,7 +167,6 @@
     "settings.import": ["Nhập dữ liệu", "Import data"],
     "settings.clearData": ["Xóa toàn bộ dữ liệu", "Delete all data"],
     "settings.shareApp": ["Chia sẻ ứng dụng", "Share app"],
-    "settings.appHub": ["Trung tâm ứng dụng của chúng tôi", "Our app hub"],
 
     // Mục tiêu
     "goals.empty": ["Chưa có mục tiêu nào", "No goals yet"],
@@ -266,7 +265,6 @@
     "backup.restored": ["Khôi phục dữ liệu thành công!", "Data restored successfully!"],
     "backup.confirmClear": ["Xóa toàn bộ giao dịch đã lưu? Không thể hoàn tác.", "Delete all saved transactions? This cannot be undone."],
     "share.linkCopied": ["Đã sao chép đường dẫn ứng dụng!", "App link copied!"],
-    "share.hubComingSoon": ["Trung tâm ứng dụng sắp ra mắt!", "App hub coming soon!"],
     "share.text": [
       "memoney — quản lý tài chính đơn giản, riêng tư, không cần tài khoản.",
       "memoney — simple, private finance tracking, no account needed.",
@@ -763,7 +761,6 @@
   const balanceSheetCancelBtn = document.getElementById("balanceSheetCancel");
   const balanceSheetSaveBtn = document.getElementById("balanceSheetSave");
   const shareAppBtn = document.getElementById("shareAppBtn");
-  const appHubBtn = document.getElementById("appHubBtn");
   const openIncomeCatBtn = document.getElementById("openIncomeCatBtn");
   const categoryManagerOverlay = document.getElementById("categoryManagerOverlay");
   const categoryManagerTitleEl = document.getElementById("categoryManagerTitle");
@@ -1754,11 +1751,13 @@
 
   /* ---------- chia sẻ ứng dụng ---------- */
 
+  const SHARE_URL = "https://meomoney.vercel.app/store.html";
+
   shareAppBtn.addEventListener("click", async () => {
     const shareData = {
       title: "memoney",
       text: t("share.text"),
-      url: window.location.href,
+      url: SHARE_URL,
     };
     if (navigator.share) {
       try {
@@ -1774,18 +1773,6 @@
     } catch (e) {
       alert(shareData.url);
     }
-  });
-
-  /* ---------- trung tâm ứng dụng ---------- */
-
-  const APP_HUB_URL = "#"; // chưa có link thật — cập nhật khi có
-
-  appHubBtn.addEventListener("click", () => {
-    if (!APP_HUB_URL || APP_HUB_URL === "#") {
-      alert(t("share.hubComingSoon"));
-      return;
-    }
-    window.open(APP_HUB_URL, "_blank", "noopener");
   });
 
   /* ---------- quản lý danh mục (chi tiêu / thu nhập) ---------- */
