@@ -399,7 +399,6 @@
 
   const healthCardEl = document.getElementById("healthCard");
   const healthCardInnerEl = document.getElementById("healthCardInner");
-  const healthCatEl = document.getElementById("healthCat");
   const healthBadge = document.getElementById("healthBadge");
   const healthPctEl = document.getElementById("healthPct");
   const healthBarFillEl = document.getElementById("healthBarFill");
@@ -456,32 +455,10 @@
   navSettingsBtn.addEventListener("click", () => showView("settings"));
   navGoalsBtn.addEventListener("click", () => showView("goals"));
 
-  /* ---------- lật thẻ sức khỏe tài chính + mèo núp ---------- */
-
-  function setHealthCatFlipState(state) {
-    healthCatEl.classList.remove("falling", "entering");
-    void healthCatEl.offsetWidth;
-    healthCatEl.classList.add(state);
-  }
+  /* ---------- lật thẻ sức khỏe tài chính ---------- */
 
   healthCardEl.addEventListener("click", () => {
-    const flipping = healthCardInnerEl.classList.toggle("flipped");
-    healthCatEl.classList.remove("waving");
-    setHealthCatFlipState(flipping ? "falling" : "entering");
-  });
-
-  healthCatEl.addEventListener("click", (e) => {
-    e.stopPropagation();
-    if (healthCardInnerEl.classList.contains("flipped")) return;
-    healthCatEl.classList.remove("waving");
-    void healthCatEl.offsetWidth;
-    healthCatEl.classList.add("waving");
-  });
-
-  healthCatEl.addEventListener("animationend", (e) => {
-    if (e.target === healthCatEl && healthCatEl.classList.contains("entering")) {
-      healthCatEl.classList.remove("entering");
-    }
+    healthCardInnerEl.classList.toggle("flipped");
   });
 
   /* ---------- bấm thẻ tổng tài sản / hôm nay -> mở Thống kê ---------- */
