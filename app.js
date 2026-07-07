@@ -197,6 +197,20 @@
     "goals.daysPassed": ["Đã qua {n} ngày", "{n} days passed"],
     "goals.daysLeft": ["Còn {n} ngày", "{n} days left"],
     "goals.amountPlaceholder": ["Số tiền", "Amount"],
+    "goals.error.name": ["Vui lòng nhập tên mục tiêu", "Please enter a goal name"],
+    "goals.error.pledge": ["Vui lòng viết lời cam kết", "Please write a pledge"],
+    "goals.error.dateOrder": [
+      "Ngày của giai đoạn 1 phải từ hôm nay trở đi, các giai đoạn sau phải có ngày muộn hơn giai đoạn trước",
+      "Stage 1's date must be today or later, and each later stage must have a later date than the one before it",
+    ],
+    "goals.error.amountOrder": [
+      "Số tiền mỗi giai đoạn phải lớn hơn giai đoạn trước",
+      "Each stage's amount must be greater than the previous stage",
+    ],
+    "goals.error.missingFields": [
+      "Vui lòng điền đầy đủ số tiền và ngày cho tất cả giai đoạn",
+      "Please fill in the amount and date for every stage",
+    ],
     "goals.confirmCancel": [
       "Bạn có chắc muốn từ bỏ mục tiêu này? Không thể hoàn tác.",
       "Are you sure you want to abandon this goal? This cannot be undone.",
@@ -746,6 +760,7 @@
   const goalPledgeInput = document.getElementById("goalPledgeInput");
   const goalFormSaveBtn = document.getElementById("goalFormSave");
   const goalFormCancelBtn = document.getElementById("goalFormCancel");
+  const goalFormErrorEl = document.getElementById("goalFormError");
   const soundToggle = document.getElementById("soundToggle");
   const noteToggle = document.getElementById("noteToggle");
   const clearDataBtn = document.getElementById("clearDataBtn");
@@ -2621,19 +2636,31 @@
     const pledge = goalPledgeInput.value.trim();
     const todayStr = toDateString(new Date());
 
-    let stagesValid = goalStageDrafts.length > 0;
-    let prevDate = todayStr;
+    let error = "";
+    let prevDate = null;
     let prevAmount = 0;
     for (const s of goalStageDrafts) {
-      if (!s.amount || s.amount <= 0 || !s.date || s.date <= prevDate || s.amount <= prevAmount) {
-        stagesValid = false;
+      if (!s.amount || s.amount <= 0 || !s.date) {
+        error = t("goals.error.missingFields");
+        break;
+      }
+      if (prevDate === null ? s.date < todayStr : s.date <= prevDate) {
+        error = t("goals.error.dateOrder");
+        break;
+      }
+      if (s.amount <= prevAmount) {
+        error = t("goals.error.amountOrder");
         break;
       }
       prevDate = s.date;
       prevAmount = s.amount;
     }
+    if (!error && !name) error = t("goals.error.name");
+    if (!error && !pledge) error = t("goals.error.pledge");
 
-    goalFormSaveBtn.disabled = !(name && stagesValid && pledge);
+    goalFormErrorEl.textContent = error;
+    goalFormErrorEl.hidden = !error;
+    goalFormSaveBtn.disabled = !!error;
   }
 
   goalNameInput.addEventListener("input", updateGoalFormValidity);
