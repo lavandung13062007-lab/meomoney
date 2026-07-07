@@ -167,11 +167,10 @@
     "settings.import": ["Nhập dữ liệu", "Import data"],
     "settings.clearData": ["Xóa toàn bộ dữ liệu", "Delete all data"],
     "settings.shareApp": ["Chia sẻ ứng dụng", "Share app"],
-    "settings.appHub": ["Trung tâm ứng dụng của chúng tôi", "Our app hub"],
 
     // Mục tiêu
     "goals.empty": ["Chưa có mục tiêu nào", "No goals yet"],
-    "goals.progress": ["Tiến độ theo thời gian", "Progress over time"],
+    "goals.progress": ["Tiến độ tiết kiệm", "Savings progress"],
     "goals.cancel": ["Từ bỏ mục tiêu", "Abandon goal"],
     "goals.add": ["+ Đặt mục tiêu mới", "+ Set a new goal"],
     "goals.formTitle": ["Đặt mục tiêu mới", "Set a new goal"],
@@ -266,7 +265,6 @@
     "backup.restored": ["Khôi phục dữ liệu thành công!", "Data restored successfully!"],
     "backup.confirmClear": ["Xóa toàn bộ giao dịch đã lưu? Không thể hoàn tác.", "Delete all saved transactions? This cannot be undone."],
     "share.linkCopied": ["Đã sao chép đường dẫn ứng dụng!", "App link copied!"],
-    "share.hubComingSoon": ["Trung tâm ứng dụng sắp ra mắt!", "App hub coming soon!"],
     "share.text": [
       "memoney — quản lý tài chính đơn giản, riêng tư, không cần tài khoản.",
       "memoney — simple, private finance tracking, no account needed.",
@@ -737,6 +735,8 @@
   const goalTimelineTodayEl = document.getElementById("goalTimelineToday");
   const goalTimelineDotsEl = document.getElementById("goalTimelineDots");
   const goalPledgeDisplayEl = document.getElementById("goalPledgeDisplay");
+  const goalCurrentAmountEl = document.getElementById("goalCurrentAmount");
+  const goalTargetAmountEl = document.getElementById("goalTargetAmount");
   const goalCancelBtn = document.getElementById("goalCancelBtn");
   const addGoalBtn = document.getElementById("addGoalBtn");
   const goalFormOverlay = document.getElementById("goalFormOverlay");
@@ -761,7 +761,6 @@
   const balanceSheetCancelBtn = document.getElementById("balanceSheetCancel");
   const balanceSheetSaveBtn = document.getElementById("balanceSheetSave");
   const shareAppBtn = document.getElementById("shareAppBtn");
-  const appHubBtn = document.getElementById("appHubBtn");
   const openIncomeCatBtn = document.getElementById("openIncomeCatBtn");
   const categoryManagerOverlay = document.getElementById("categoryManagerOverlay");
   const categoryManagerTitleEl = document.getElementById("categoryManagerTitle");
@@ -1752,11 +1751,13 @@
 
   /* ---------- chia sẻ ứng dụng ---------- */
 
+  const SHARE_URL = "https://meomoney.vercel.app/store.html";
+
   shareAppBtn.addEventListener("click", async () => {
     const shareData = {
       title: "memoney",
       text: t("share.text"),
-      url: window.location.href,
+      url: SHARE_URL,
     };
     if (navigator.share) {
       try {
@@ -1772,18 +1773,6 @@
     } catch (e) {
       alert(shareData.url);
     }
-  });
-
-  /* ---------- trung tâm ứng dụng ---------- */
-
-  const APP_HUB_URL = "#"; // chưa có link thật — cập nhật khi có
-
-  appHubBtn.addEventListener("click", () => {
-    if (!APP_HUB_URL || APP_HUB_URL === "#") {
-      alert(t("share.hubComingSoon"));
-      return;
-    }
-    window.open(APP_HUB_URL, "_blank", "noopener");
   });
 
   /* ---------- quản lý danh mục (chi tiêu / thu nhập) ---------- */
@@ -2634,12 +2623,14 @@
 
     let stagesValid = goalStageDrafts.length > 0;
     let prevDate = todayStr;
+    let prevAmount = 0;
     for (const s of goalStageDrafts) {
-      if (!s.amount || s.amount <= 0 || !s.date || s.date <= prevDate) {
+      if (!s.amount || s.amount <= 0 || !s.date || s.date <= prevDate || s.amount <= prevAmount) {
         stagesValid = false;
         break;
       }
       prevDate = s.date;
+      prevAmount = s.amount;
     }
 
     goalFormSaveBtn.disabled = !(name && stagesValid && pledge);
@@ -2685,16 +2676,16 @@
     goalNameHeroEl.textContent = goal.name;
     goalPledgeDisplayEl.textContent = `"${goal.pledge}"`;
 
-    const start = new Date(`${goal.createdAt}T00:00:00`);
+    const { current } = computeFinance();
     const finalStage = goal.stages[goal.stages.length - 1];
-    const finalDate = new Date(`${finalStage.date}T00:00:00`);
-    const totalMs = Math.max(1, finalDate - start);
+    const targetAmount = Math.max(1, finalStage.amount);
     const now = Date.now();
-    const elapsedMs = Math.max(0, Math.min(totalMs, now - start.getTime()));
-    const progressPct = Math.max(0, Math.min(100, (elapsedMs / totalMs) * 100));
+    const progressPct = Math.max(0, Math.min(100, (current / targetAmount) * 100));
 
     goalProgressFillEl.style.width = `${progressPct}%`;
     goalProgressPctEl.textContent = `${Math.round(progressPct)}%`;
+    goalCurrentAmountEl.textContent = formatCurrency(Math.max(0, current));
+    goalTargetAmountEl.textContent = formatCurrency(finalStage.amount);
 
     goalTimelineFillEl.style.height = `${progressPct}%`;
     goalTimelineTodayEl.style.top = `${progressPct}%`;
@@ -2704,15 +2695,16 @@
 
     goalTimelineDotsEl.innerHTML = goal.stages
       .map((s, i) => {
+        const pct = Math.max(0, Math.min(100, (s.amount / targetAmount) * 100));
+        const reached = current >= s.amount;
         const stageDate = new Date(`${s.date}T00:00:00`);
-        const pct = Math.max(0, Math.min(100, ((stageDate - start) / totalMs) * 100));
-        const reached = now >= stageDate.getTime();
         const daysLeft = Math.ceil((stageDate.getTime() - now) / 86400000);
-        const daysText = reached
-          ? tFormat("goals.daysPassed", { n: Math.abs(daysLeft) })
-          : daysLeft === 0
-          ? t("goals.today")
-          : tFormat("goals.daysLeft", { n: daysLeft });
+        const daysText =
+          daysLeft > 0
+            ? tFormat("goals.daysLeft", { n: daysLeft })
+            : daysLeft === 0
+            ? t("goals.today")
+            : tFormat("goals.daysPassed", { n: Math.abs(daysLeft) });
         // chừa 36px ở 2 đầu để thẻ giai đoạn (cao hơn 1 điểm) không tràn ra ngoài, đè lên nút bên dưới
         const rowTop = `calc(36px + (${pct} / 100) * (100% - 72px))`;
         return `

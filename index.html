@@ -343,7 +343,6 @@
       <button type="button" id="clearDataBtn" class="btn btn-danger-full" data-i18n="settings.clearData">Xóa toàn bộ dữ liệu</button>
 
       <button type="button" id="shareAppBtn" class="btn btn-secondary settings-btn" data-i18n="settings.shareApp">Chia sẻ ứng dụng</button>
-      <button type="button" id="appHubBtn" class="btn btn-secondary settings-btn" data-i18n="settings.appHub">Trung tâm ứng dụng của chúng tôi</button>
     </div>
   </section>
 
@@ -359,11 +358,16 @@
 
       <div class="goal-progress">
         <div class="goal-progress-head">
-          <span class="goal-progress-label" data-i18n="goals.progress">Tiến độ theo thời gian</span>
+          <span class="goal-progress-label" data-i18n="goals.progress">Tiến độ tiết kiệm</span>
           <span class="goal-progress-pct" id="goalProgressPct">0%</span>
         </div>
         <div class="goal-progress-track">
           <div class="goal-progress-fill" id="goalProgressFill"></div>
+        </div>
+        <div class="goal-progress-amounts">
+          <span id="goalCurrentAmount">0 ₫</span>
+          <span class="goal-progress-sep">/</span>
+          <span id="goalTargetAmount">0 ₫</span>
         </div>
       </div>
 
