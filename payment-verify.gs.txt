@@ -1,0 +1,120 @@
+// ============================================================
+// MEOMONEY — TỰ ĐỘNG XÁC NHẬN THANH TOÁN PREMIUM QUA EMAIL CAKE
+// ============================================================
+// CÁCH CÀI ĐẶT:
+// 1. Vào sheets.google.com, tạo 1 Google Sheet MỚI (trống), đặt tên gì cũng được
+//    (ví dụ "MeoMoney Payments"). Không cần tạo sẵn tab/cột gì, script tự tạo.
+// 2. Trong sheet đó: Tiện ích mở rộng > Apps Script.
+// 3. Xóa hết code mẫu (myFunction rỗng), dán TOÀN BỘ nội dung file này vào.
+// 4. Ở thanh công cụ Apps Script, chọn hàm "batTuDong" (dropdown cạnh nút Chạy),
+//    bấm Chạy (▶). Lần đầu Google sẽ hỏi cấp quyền — chọn tài khoản của bạn,
+//    bấm "Advanced/Nâng cao" > "Go to ... (unsafe)" > Allow. Đây là quyền bạn
+//    tự cấp cho chính script của mình, không gửi gì ra ngoài.
+// 5. Vào Triển khai (Deploy) > Triển khai mới (New deployment):
+//    - Loại: Ứng dụng web (Web app)
+//    - Execute as: Me (email của bạn)
+//    - Who has access: Anyone (bắt buộc, để app web gọi vào được)
+//    Bấm Triển khai, copy URL dạng https://script.google.com/macros/s/xxxx/exec
+// 6. Gửi URL đó lại cho Claude để gắn vào app.js (biến PAYMENT_CHECK_URL).
+//
+// Từ giờ script sẽ tự quét email Cake mới mỗi 10 phút, tìm giao dịch có nội
+// dung chuyển khoản dạng "MEO XXXXXX" (mã máy khách), ghi vào sheet. App sẽ
+// tự hỏi vào URL trên để biết máy mình đã được duyệt thanh toán chưa.
+//
+// Nếu 1 khách báo "đã chuyển nhưng chưa lên Premium": mở sheet, tìm dòng có
+// đúng mã máy (khách cung cấp trong app), điền tay cột "Gói" (monthly hoặc
+// lifetime) nếu còn trống rồi để trống cột "Đã kích hoạt" — app sẽ tự lấy.
+
+const SHEET_NAME = 'Payments';
+const PLAN_PRICES = { 19000: 'monthly', 199000: 'lifetime' };
+
+function laySheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName(SHEET_NAME);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_NAME);
+    sheet.appendRow(['Thời gian', 'Mã giao dịch', 'Số tiền', 'Nội dung CK', 'Mã máy', 'Gói', 'Đã kích hoạt']);
+  }
+  return sheet;
+}
+
+// Quét các email gần nhất, tìm email Cake báo tiền vào, ghi giao dịch mới vào sheet.
+// Chống trùng lặp bằng "mã giao dịch" (mỗi giao dịch ngân hàng có 1 mã riêng).
+function docThanhToanMeoMoney() {
+  const sheet = laySheet();
+  const data = sheet.getDataRange().getValues();
+  const maDaLuu = new Set(data.slice(1).map((r) => String(r[1]).trim().toUpperCase()));
+
+  const threads = GmailApp.getInboxThreads(0, 15);
+  threads.forEach((thread) => {
+    const msg = thread.getMessages().pop();
+    const subject = msg.getSubject().toLowerCase();
+    if (subject.indexOf('cake') === -1 && subject.indexOf('giao dịch') === -1) return;
+
+    const body = msg.getPlainBody().replace(/[\s​-‍﻿]/g, '').toLowerCase();
+
+    const maGD = (body.match(/mãgiaodịch([a-z0-9]+)/i) || [])[1];
+    if (!maGD || maDaLuu.has(maGD.toUpperCase())) return;
+
+    const matchTien = body.match(/sốtiền([+-])([\d.,]+)đ/i);
+    if (!matchTien) return;
+    let soTien = parseInt(matchTien[2].replace(/[^\d]/g, ''), 10);
+    if (matchTien[1] === '-') soTien = -soTien;
+    if (soTien <= 0) return; // chỉ quan tâm tiền vào, bỏ qua tiền ra
+
+    const matchNoiDung = body.match(/nộidunggiaodịch(.*?)(cảmơn|mãgiaodịch|$)/i);
+    const noiDung = matchNoiDung ? matchNoiDung[1].toUpperCase() : '';
+
+    const matchMaMay = noiDung.match(/MEO ?([A-Z0-9]{6})/);
+    const maMay = matchMaMay ? matchMaMay[1] : '';
+    const goi = PLAN_PRICES[soTien] || '';
+
+    sheet.appendRow([new Date(), maGD.toUpperCase(), soTien, noiDung, maMay, goi, '']);
+    maDaLuu.add(maGD.toUpperCase());
+  });
+}
+
+// Web App: app meomoney gọi vào đây (dạng GET ?deviceId=XXXXXX) để hỏi
+// "máy tôi đã được duyệt thanh toán chưa?". Mỗi giao dịch chỉ trả về 1 lần
+// (đánh dấu "Đã kích hoạt" ngay sau khi trả lời) để lần nạp gói sau không bị nhầm lẫn.
+function doGet(e) {
+  const deviceId = ((e && e.parameter && e.parameter.deviceId) || '').toUpperCase();
+  const output = { paid: false };
+
+  if (deviceId) {
+    const sheet = laySheet();
+    const data = sheet.getDataRange().getValues();
+    for (let i = data.length - 1; i >= 1; i--) {
+      const maMay = data[i][4];
+      const goi = data[i][5];
+      const daKichHoat = data[i][6];
+      if (maMay === deviceId && goi && !daKichHoat) {
+        output.paid = true;
+        output.plan = goi;
+        sheet.getRange(i + 1, 7).setValue(new Date());
+        break;
+      }
+    }
+  }
+
+  return ContentService.createTextOutput(JSON.stringify(output)).setMimeType(ContentService.MimeType.JSON);
+}
+
+function batTuDong() {
+  ScriptApp.getProjectTriggers().forEach((t) => {
+    if (t.getHandlerFunction() === 'docThanhToanMeoMoney') ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger('docThanhToanMeoMoney').timeBased().everyMinutes(10).create();
+  docThanhToanMeoMoney(); // chạy thử ngay 1 lần — cũng là lúc Google hỏi xin quyền
+}
+
+function tatTuDong() {
+  let count = 0;
+  ScriptApp.getProjectTriggers().forEach((t) => {
+    if (t.getHandlerFunction() === 'docThanhToanMeoMoney') {
+      ScriptApp.deleteTrigger(t);
+      count++;
+    }
+  });
+  Logger.log('Đã tắt tự động (xóa ' + count + ' trigger).');
+}
