@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>MeoMoney</title>
+<link rel="icon" href="icons/favicon-32.png" />
+<style>
+  :root {
+    --bg: #f3faf5;
+    --primary: #f15a29;
+    --primary-dark: #c8451d;
+    --text: #14261c;
+    --text-muted: #6b7c73;
+    --surface: #ffffff;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    touch-action: manipulation;
+  }
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100dvh;
+    padding: 24px;
+  }
+  .card {
+    width: 100%;
+    max-width: 360px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 18px;
+  }
+  .icon {
+    width: 104px;
+    height: 104px;
+    border-radius: 28px;
+    box-shadow: 0 12px 30px rgba(241, 90, 41, 0.25);
+  }
+  h1 {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+  .btn {
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 16px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary {
+    background: var(--primary);
+    color: #fff;
+    box-shadow: 0 10px 24px rgba(241, 90, 41, 0.3);
+  }
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 8px;
+  }
+  .btn-link {
+    background: var(--surface);
+    color: var(--primary);
+    border: 2px solid var(--primary);
+  }
+  .actions {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 6px;
+  }
+  .hint {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    min-height: 1.2em;
+  }
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(20, 38, 28, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 10;
+  }
+  .overlay.open { opacity: 1; pointer-events: auto; }
+  .sheet {
+    width: 100%;
+    max-width: 400px;
+    background: var(--surface);
+    border-radius: 22px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    transform: translateY(12px);
+    transition: transform 0.2s ease;
+  }
+  .overlay.open .sheet { transform: translateY(0); }
+  .video-frame {
+    width: 100%;
+    aspect-ratio: 9 / 16;
+    background: #0b0f0d;
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .video-frame video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .video-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffffaa;
+    font-size: 0.85rem;
+    text-align: center;
+    padding: 20px;
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <img class="icon" src="icons/icon-512.png" alt="MeoMoney" />
+  <h1>MeoMoney</h1>
+
+  <div class="actions">
+    <button id="installBtn" class="btn btn-primary">Cài đặt</button>
+    <a id="openBtn" class="btn btn-link" href="https://meomoney.vercel.app/" style="text-decoration:none; display:none;">Mở ứng dụng</a>
+  </div>
+  <div id="hint" class="hint"></div>
+</div>
+
+<div id="videoOverlay" class="overlay">
+  <div class="sheet">
+    <div class="video-frame">
+      <video id="tutorialVideo" playsinline controls style="display:none;"></video>
+      <div id="videoPlaceholder" class="video-placeholder">Video hướng dẫn sẽ sớm cập nhật</div>
+    </div>
+    <a class="btn btn-link" href="https://meomoney.vercel.app/" style="text-decoration:none;">Truy cập ứng dụng</a>
+    <button id="closeOverlay" class="btn btn-ghost">Đóng</button>
+  </div>
+</div>
+
+<script>
+  const APP_URL = "https://meomoney.vercel.app/";
+  const IOS_TUTORIAL_VIDEO = ""; // set a video URL here when ready, e.g. "videos/ios-install.mp4"
+
+  const ua = navigator.userAgent;
+  const isIOS = /iPad|iPhone|iPod/.test(ua) || (ua.includes("Macintosh") && navigator.maxTouchPoints > 1);
+  const isAndroid = /Android/.test(ua);
+
+  const installBtn = document.getElementById("installBtn");
+  const openBtn = document.getElementById("openBtn");
+  const hint = document.getElementById("hint");
+  const videoOverlay = document.getElementById("videoOverlay");
+  const closeOverlay = document.getElementById("closeOverlay");
+  const tutorialVideo = document.getElementById("tutorialVideo");
+  const videoPlaceholder = document.getElementById("videoPlaceholder");
+
+  let deferredPrompt = null;
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+  });
+
+  if (IOS_TUTORIAL_VIDEO) {
+    tutorialVideo.src = IOS_TUTORIAL_VIDEO;
+    tutorialVideo.style.display = "block";
+    videoPlaceholder.style.display = "none";
+  }
+
+  if (isIOS) {
+    installBtn.addEventListener("click", () => {
+      videoOverlay.classList.add("open");
+      if (IOS_TUTORIAL_VIDEO) tutorialVideo.play().catch(() => {});
+    });
+  } else if (isAndroid) {
+    installBtn.addEventListener("click", async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        await deferredPrompt.userChoice;
+        deferredPrompt = null;
+      } else {
+        window.location.href = APP_URL;
+      }
+    });
+  } else {
+    installBtn.textContent = "Mở ứng dụng";
+    installBtn.addEventListener("click", () => {
+      window.location.href = APP_URL;
+    });
+  }
+
+  closeOverlay.addEventListener("click", () => {
+    videoOverlay.classList.remove("open");
+    tutorialVideo.pause();
+  });
+</script>
+</body>
+</html>
