@@ -38,6 +38,7 @@ body {
   background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
+  touch-action: manipulation;
 }
 
 .app {
@@ -2177,9 +2178,17 @@ body {
 .onboarding-card h1 { font-size: 1.3rem; margin: 0 0 10px; }
 .onboarding-card p { color: var(--text-muted); font-size: 0.92rem; line-height: 1.55; margin: 0 0 4px; }
 .onboarding-logo { font-size: 3.2rem; display: block; margin-bottom: 14px; }
+.onboarding-logo-img { width: 92px; height: auto; display: block; margin: 0 auto 14px; }
 .onboarding-card .setting-block { text-align: left; }
 .onboarding-card .setting-block:last-of-type { border-bottom: none; }
 .onboarding-full-btn { width: 100%; margin-top: 24px; }
+.onboarding-amount-display {
+  color: var(--text);
+  padding: 10px 16px;
+  margin-top: 10px;
+}
+.onboarding-card .keypad { margin-top: 14px; gap: 8px; }
+.onboarding-card .key { padding: 13px 0; font-size: 1.15rem; }
 
 /* Trình hướng dẫn (spotlight tour) */
 .tour-mat {

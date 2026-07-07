@@ -588,7 +588,7 @@
 
 <div id="onboardingWelcome" class="onboarding-screen" hidden>
   <div class="onboarding-card">
-    <span class="onboarding-logo">🐱</span>
+    <img src="icons/onboarding-cat.svg" class="onboarding-logo-img" alt="">
     <h1 data-i18n="onboarding.welcome.title">MeoMoney xin chào!</h1>
     <p data-i18n="onboarding.welcome.desc">Mình là chú mèo quản lý tiền của bạn. Để mình dẫn bạn đi một vòng làm quen nhé!</p>
     <button type="button" id="onboardingWelcomeNext" class="btn btn-primary onboarding-full-btn" data-i18n="onboarding.welcome.next">Tiếp theo</button>
@@ -602,7 +602,25 @@
     <div class="setting-block">
       <div class="setting-title" data-i18n="settings.initialBalance">Tổng tiền hiện có</div>
       <div class="setting-desc" data-i18n="onboarding.setup.balanceDesc">Nhập đúng số dư bạn đang có — mình sẽ tính từ đây nhé</div>
-      <input type="text" inputmode="numeric" id="onboardingBalanceInput" class="setting-amount-input-full" placeholder="0 ₫">
+      <div class="amount-display onboarding-amount-display" id="onboardingAmountDisplay">
+        <span id="onboardingAmountValue">0</span><span class="amount-currency">₫</span>
+      </div>
+      <div class="keypad" id="onboardingKeypad">
+        <button type="button" class="key" data-key="7">7</button>
+        <button type="button" class="key" data-key="8">8</button>
+        <button type="button" class="key" data-key="9">9</button>
+        <button type="button" class="key" data-key="4">4</button>
+        <button type="button" class="key" data-key="5">5</button>
+        <button type="button" class="key" data-key="6">6</button>
+        <button type="button" class="key" data-key="1">1</button>
+        <button type="button" class="key" data-key="2">2</button>
+        <button type="button" class="key" data-key="3">3</button>
+        <button type="button" class="key key-alt" data-key="000">000</button>
+        <button type="button" class="key" data-key="0">0</button>
+        <button type="button" class="key key-alt" data-key="back" data-i18n-aria="tx.backspace.aria" aria-label="Xóa 1 số">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 5H8l-6 7 6 7h14a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1z"/><path d="M13 9l6 6M19 9l-6 6"/></svg>
+        </button>
+      </div>
     </div>
 
     <div class="setting-block">

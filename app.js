@@ -713,11 +713,10 @@
   const amountDisplayEl = document.getElementById("amountDisplay");
   const amountSignEl = document.getElementById("amountSign");
   const amountValueEl = document.getElementById("amountValue");
-  const amountCurrencyEl = document.querySelector(".amount-currency");
   const currencyOptionsEl = document.getElementById("currencyOptions");
   const languageOptionsEl = document.getElementById("languageOptions");
-  const keypadEl = document.querySelector(".keypad");
-  const backKeyBtn = document.querySelector('.key[data-key="back"]');
+  const keypadEl = txForm.querySelector(".keypad");
+  const backKeyBtn = txForm.querySelector('.key[data-key="back"]');
 
   const navHomeBtn = document.getElementById("navHome");
   const navStatsBtn = document.getElementById("navStats");
@@ -835,7 +834,8 @@
   const onboardingWelcomeEl = document.getElementById("onboardingWelcome");
   const onboardingWelcomeNextBtn = document.getElementById("onboardingWelcomeNext");
   const onboardingSetupEl = document.getElementById("onboardingSetup");
-  const onboardingBalanceInput = document.getElementById("onboardingBalanceInput");
+  const onboardingAmountValueEl = document.getElementById("onboardingAmountValue");
+  const onboardingKeypadEl = document.getElementById("onboardingKeypad");
   const onboardingCurrencyOptionsEl = document.getElementById("onboardingCurrencyOptions");
   const onboardingStartBtn = document.getElementById("onboardingStartBtn");
   const onboardingDoneEl = document.getElementById("onboardingDone");
@@ -1604,7 +1604,7 @@
 
   function applyCurrencySymbol() {
     const cur = CURRENCIES[activeCurrency] || CURRENCIES.vnd;
-    amountCurrencyEl.textContent = cur.symbol;
+    document.querySelectorAll(".amount-currency").forEach((el) => { el.textContent = cur.symbol; });
     initialBalanceInput.placeholder = `0 ${cur.symbol}`;
   }
 
@@ -2697,9 +2697,27 @@
     applyCurrencySymbol();
   });
 
-  onboardingBalanceInput.addEventListener("input", () => {
-    const digits = onboardingBalanceInput.value.replace(/\D/g, "");
-    onboardingBalanceInput.value = digits ? Number(digits).toLocaleString("vi-VN") : "";
+  let onboardingBalanceBuffer = "";
+
+  function renderOnboardingAmount() {
+    const n = Number(onboardingBalanceBuffer || "0");
+    onboardingAmountValueEl.textContent = n.toLocaleString("vi-VN");
+  }
+
+  onboardingKeypadEl.addEventListener("click", (e) => {
+    const btn = e.target.closest(".key");
+    if (!btn) return;
+    playKeyClick();
+    const key = btn.dataset.key;
+    if (key === "back") {
+      onboardingBalanceBuffer = onboardingBalanceBuffer.slice(0, -1);
+    } else if (key === "000") {
+      if (onboardingBalanceBuffer) onboardingBalanceBuffer = (onboardingBalanceBuffer + "000").slice(0, MAX_AMOUNT_DIGITS);
+    } else {
+      if (onboardingBalanceBuffer.length >= MAX_AMOUNT_DIGITS) return;
+      onboardingBalanceBuffer = (onboardingBalanceBuffer === "0" ? "" : onboardingBalanceBuffer) + key;
+    }
+    renderOnboardingAmount();
   });
 
   onboardingWelcomeNextBtn.addEventListener("click", () => {
@@ -2709,7 +2727,7 @@
   });
 
   onboardingStartBtn.addEventListener("click", () => {
-    const entered = Number(onboardingBalanceInput.value.replace(/\D/g, "")) || 0;
+    const entered = Number(onboardingBalanceBuffer || "0");
     initialBalance = entered;
     localStorage.setItem(INITIAL_BALANCE_KEY, String(initialBalance));
     if (entered) addMonthlyBaselineSplit(entered);
