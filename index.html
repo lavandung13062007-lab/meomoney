@@ -611,6 +611,35 @@
   </div>
 </div>
 
+<div id="cfPctOverlay" class="modal-overlay" hidden>
+  <div class="sheet balance-sheet" role="dialog" aria-modal="true" aria-labelledby="cfPctSheetTitle">
+    <h2 id="cfPctSheetTitle" data-i18n="customFormula.pctSheetTitle">Tỉ lệ %</h2>
+    <div class="amount-display onboarding-amount-display">
+      <span id="cfPctSheetValue">0</span><span class="amount-unit">%</span>
+    </div>
+    <div class="keypad" id="cfPctKeypad">
+      <button type="button" class="key" data-key="7">7</button>
+      <button type="button" class="key" data-key="8">8</button>
+      <button type="button" class="key" data-key="9">9</button>
+      <button type="button" class="key" data-key="4">4</button>
+      <button type="button" class="key" data-key="5">5</button>
+      <button type="button" class="key" data-key="6">6</button>
+      <button type="button" class="key" data-key="1">1</button>
+      <button type="button" class="key" data-key="2">2</button>
+      <button type="button" class="key" data-key="3">3</button>
+      <button type="button" class="key key-alt" data-key="clear" data-i18n="customFormula.pctClear">Xóa</button>
+      <button type="button" class="key" data-key="0">0</button>
+      <button type="button" class="key key-alt" data-key="back" data-i18n-aria="tx.backspace.aria" aria-label="Xóa 1 số">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 5H8l-6 7 6 7h14a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1z"/><path d="M13 9l6 6M19 9l-6 6"/></svg>
+      </button>
+    </div>
+    <div class="modal-actions">
+      <button type="button" id="cfPctSheetCancel" class="btn btn-danger" data-i18n="customFormula.cancel">Hủy</button>
+      <button type="button" id="cfPctSheetSave" class="btn btn-primary" data-i18n="tx.save">Lưu</button>
+    </div>
+  </div>
+</div>
+
 <div id="customFormulaOverlay" class="modal-overlay" hidden>
   <div class="sheet custom-formula-sheet" role="dialog" aria-modal="true" aria-labelledby="customFormulaTitle">
     <h2 id="customFormulaTitle" data-i18n="customFormula.title">Tự đặt công thức</h2>

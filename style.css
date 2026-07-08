@@ -752,7 +752,8 @@ body {
   display: none;
 }
 #goalAmountOverlay,
-#quickNoteAmountOverlay { z-index: 60; }
+#quickNoteAmountOverlay,
+#cfPctOverlay { z-index: 60; }
 .sheet {
   position: relative;
   background: var(--surface);
@@ -910,7 +911,8 @@ body {
 }
 .amount-display.income { color: var(--income); }
 #amountSign { font-size: 1.5rem; opacity: 0.75; }
-.amount-currency {
+.amount-currency,
+.amount-unit {
   font-size: 1.1rem;
   font-weight: 700;
   opacity: 0.7;
@@ -2202,14 +2204,23 @@ body {
   padding: 9px 10px;
   font-size: 16px;
 }
-.custom-formula-row input[type="number"] {
+.custom-formula-row input[type="number"],
+.custom-formula-row .cf-pct {
   width: 64px;
+  flex: 0 0 auto;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 9px 8px;
   font-size: 16px;
   text-align: center;
 }
+.custom-formula-row .cf-pct {
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 700;
+  cursor: pointer;
+}
+.custom-formula-row .cf-pct.empty { font-weight: 400; color: var(--text-muted); }
 .custom-formula-row-remove {
   border: none;
   background: var(--expense-bg);

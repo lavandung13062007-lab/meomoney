@@ -324,6 +324,9 @@
     "customFormula.save": ["Lưu", "Save"],
     "customFormula.namePlaceholder": ["Tên mục", "Item name"],
     "customFormula.delete.aria": ["Xóa mục", "Delete item"],
+    "customFormula.pctSheetTitle": ["Tỉ lệ %", "Ratio %"],
+    "customFormula.pctClear": ["Xóa", "Clear"],
+    "customFormula.pctPlaceholder": ["0", "0"],
 
     // Cuộn lên đầu trang
     "scrollTop.aria": ["Cuộn lên đầu trang", "Scroll to top"],
@@ -880,6 +883,11 @@
   const customFormulaTotalEl = document.getElementById("customFormulaTotal");
   const customFormulaSaveBtn = document.getElementById("customFormulaSave");
   const customFormulaCancelBtn = document.getElementById("customFormulaCancel");
+  const cfPctOverlay = document.getElementById("cfPctOverlay");
+  const cfPctKeypadEl = document.getElementById("cfPctKeypad");
+  const cfPctSheetValueEl = document.getElementById("cfPctSheetValue");
+  const cfPctSheetCancelBtn = document.getElementById("cfPctSheetCancel");
+  const cfPctSheetSaveBtn = document.getElementById("cfPctSheetSave");
 
   const scrollTopBtn = document.getElementById("scrollTopBtn");
 
@@ -1376,9 +1384,10 @@
     const rowEl = document.createElement("div");
     rowEl.className = "custom-formula-row";
     rowEl.dataset.key = row.key || uid();
+    const pct = Number(row.pct) || 0;
     rowEl.innerHTML = `
       <input type="text" class="cf-label" placeholder="${t("customFormula.namePlaceholder")}" value="${escapeHtml(row.label || "")}">
-      <input type="number" class="cf-pct" min="0" max="100" value="${row.pct || ""}">
+      <button type="button" class="cf-pct${pct ? "" : " empty"}" data-pct="${pct}">${pct ? pct + "%" : t("customFormula.pctPlaceholder")}</button>
       <button type="button" class="custom-formula-row-remove" aria-label="${t("customFormula.delete.aria")}">✕</button>
     `;
     customFormulaRowsEl.appendChild(rowEl);
@@ -1386,7 +1395,7 @@
 
   function updateCustomFormulaTotal() {
     const rows = [...customFormulaRowsEl.querySelectorAll(".custom-formula-row")];
-    const total = rows.reduce((s, r) => s + (Number(r.querySelector(".cf-pct").value) || 0), 0);
+    const total = rows.reduce((s, r) => s + (Number(r.querySelector(".cf-pct").dataset.pct) || 0), 0);
     customFormulaTotalEl.textContent = total;
     const namesFilled = rows.length > 0 && rows.every((r) => r.querySelector(".cf-label").value.trim());
     customFormulaSaveBtn.disabled = !(total === 100 && namesFilled);
@@ -1395,8 +1404,62 @@
   customFormulaRowsEl.addEventListener("input", updateCustomFormulaTotal);
   customFormulaRowsEl.addEventListener("click", (e) => {
     const removeBtn = e.target.closest(".custom-formula-row-remove");
-    if (!removeBtn) return;
-    removeBtn.closest(".custom-formula-row").remove();
+    if (removeBtn) {
+      removeBtn.closest(".custom-formula-row").remove();
+      updateCustomFormulaTotal();
+      return;
+    }
+    const pctBtn = e.target.closest(".cf-pct");
+    if (pctBtn) openCfPctSheet(pctBtn);
+  });
+
+  // Tỉ lệ % cũng dùng bàn phím riêng của app (bàn phím hệ điều hành không bật được trên một số máy/PWA)
+  let cfPctBuffer = "";
+  let cfPctEditBtn = null;
+
+  function renderCfPctSheet() {
+    cfPctSheetValueEl.textContent = cfPctBuffer || "0";
+  }
+
+  function openCfPctSheet(btn) {
+    cfPctEditBtn = btn;
+    const cur = Number(btn.dataset.pct) || 0;
+    cfPctBuffer = cur ? String(cur) : "";
+    renderCfPctSheet();
+    cfPctOverlay.hidden = false;
+  }
+
+  cfPctKeypadEl.addEventListener("click", (e) => {
+    const btn = e.target.closest(".key");
+    if (!btn) return;
+    playKeyClick();
+    const key = btn.dataset.key;
+    if (key === "back") {
+      cfPctBuffer = cfPctBuffer.slice(0, -1);
+    } else if (key === "clear") {
+      cfPctBuffer = "";
+    } else {
+      let next = (cfPctBuffer === "0" ? "" : cfPctBuffer) + key;
+      if (Number(next) > 100) next = "100";
+      cfPctBuffer = next;
+    }
+    renderCfPctSheet();
+  });
+
+  cfPctSheetCancelBtn.addEventListener("click", () => {
+    cfPctOverlay.hidden = true;
+  });
+  cfPctOverlay.addEventListener("click", (e) => {
+    if (e.target === cfPctOverlay) cfPctOverlay.hidden = true;
+  });
+
+  cfPctSheetSaveBtn.addEventListener("click", () => {
+    if (!cfPctEditBtn) return;
+    const pct = Number(cfPctBuffer) || 0;
+    cfPctEditBtn.dataset.pct = pct;
+    cfPctEditBtn.textContent = pct ? pct + "%" : t("customFormula.pctPlaceholder");
+    cfPctEditBtn.classList.toggle("empty", !pct);
+    cfPctOverlay.hidden = true;
     updateCustomFormulaTotal();
   });
 
@@ -1415,7 +1478,7 @@
     customBuckets = rows.map((r) => ({
       key: r.dataset.key,
       label: r.querySelector(".cf-label").value.trim(),
-      pct: Number(r.querySelector(".cf-pct").value) || 0,
+      pct: Number(r.querySelector(".cf-pct").dataset.pct) || 0,
     }));
     saveCustomBuckets();
     closeCustomFormulaSetup();
@@ -3201,7 +3264,21 @@
 })();
 
 if ("serviceWorker" in navigator) {
+  // Nếu app đang được điều khiển bởi 1 service worker cũ, khi bản mới chiếm quyền
+  // ta tự tải lại 1 lần để lấy code mới ngay (đặc biệt quan trọng với app đã cài trên iOS,
+  // vốn hay kẹt ở bản cache cũ). Có cờ chống lặp vô hạn.
+  let swReloaded = false;
+  if (navigator.serviceWorker.controller) {
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (swReloaded) return;
+      swReloaded = true;
+      window.location.reload();
+    });
+  }
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js");
+    navigator.serviceWorker.register("sw.js").then((reg) => {
+      // Chủ động kiểm tra bản cập nhật mỗi lần mở app
+      reg.update();
+    });
   });
 }
