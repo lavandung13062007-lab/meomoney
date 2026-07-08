@@ -1072,6 +1072,41 @@ body {
 }
 .setting-amount-input-full { font-weight: 700; }
 .setting-amount-btn { text-align: left; cursor: pointer; }
+
+/* mã giới thiệu: chip mã lớn + gợi ý sao chép, đổi trạng thái khi đã copy */
+.referral-code-btn {
+  width: 100%;
+  margin-top: 10px;
+  border: 1px dashed var(--primary);
+  background: var(--primary-light, var(--surface-2));
+  border-radius: var(--radius-md);
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.2s ease, border-color 0.2s ease;
+}
+.referral-code-btn:active { transform: scale(0.98); }
+.referral-code-value {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: var(--primary-dark, var(--primary));
+  font-variant-numeric: tabular-nums;
+}
+.referral-code-copy {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--primary);
+  white-space: nowrap;
+}
+.referral-code-btn.copied {
+  border-style: solid;
+  border-color: var(--primary);
+}
+.referral-code-btn.copied .referral-code-copy { color: var(--primary-dark, var(--primary)); }
 .balance-sheet h2 { margin: 0 0 6px; font-size: 1.05rem; text-align: center; }
 .balance-sheet .keypad { margin-top: 0; margin-bottom: 12px; }
 .setting-amount-input-full:focus,

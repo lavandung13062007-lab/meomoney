@@ -153,6 +153,13 @@
       "Ngày bạn bắt đầu dùng memoney (tự động ghi nhận, không thể chỉnh sửa)",
       "The date you started using memoney (auto-recorded, cannot be edited)",
     ],
+    "settings.referral": ["Mã giới thiệu của bạn", "Your referral code"],
+    "settings.referral.desc": [
+      "Gửi mã này cho người đã mời bạn để họ nhập vào sự kiện đua top giới thiệu.",
+      "Send this code to whoever invited you so they can enter it in the referral contest.",
+    ],
+    "settings.referral.copy": ["Chạm để sao chép", "Tap to copy"],
+    "settings.referral.copied": ["Đã sao chép mã!", "Code copied!"],
     "settings.yourData": ["Dữ liệu của bạn", "Your data"],
     "settings.yourData.desc": [
       "Lưu cục bộ trên máy này, không cần tài khoản, không cần mạng 🔒",
@@ -584,6 +591,14 @@
   const BANK_INFO = { bin: "546034", accountNo: "0919248086" }; // Cake by VPBank
 
   const PAYMENT_CHECK_URL = "https://script.google.com/macros/s/AKfycbz-WI8JWiOQ-mWwUxngXU6KN8J4MyT005BtV7cka8SytHHM-mFNAtwc_PDQs08WLaBk/exec";
+
+  // Sự kiện "đua top giới thiệu": khi máy này trở thành người dùng THẬT (đạt mốc
+  // hoạt động) app sẽ âm thầm báo mã máy lên web contest, để lúc có người nhập
+  // mã đó vào contest thì biết đây là người thật — chống xóa-cài lại xin mã mới
+  // rồi spam. CHỈ gửi mã máy + cờ hoạt động, KHÔNG gửi bất kỳ số liệu tài chính
+  // nào. Dán URL web app contest (…/exec) vào đây khi sự kiện sẵn sàng; để trống
+  // thì app không gửi gì cả.
+  const REFERRAL_ACTIVITY_URL = "";
 
   const DEVICE_ID_KEY = "sotuchi.deviceId";
   function getDeviceId() {
@@ -1189,7 +1204,17 @@
       .map((b, i) => {
         const bucket = buckets[b.key] || { balance: 0, allocated: 0 };
         const negative = bucket.balance < 0;
-        const pct = bucket.allocated > 0 ? Math.max(0, Math.min(100, (bucket.balance / bucket.allocated) * 100)) : 0;
+        // Thanh = phần còn lại của lọ: đầy khi chưa tiêu, vơi dần theo số đã tiêu.
+        // Khi bội chi (âm) thanh chuyển đỏ và DÀI DẦN theo mức vượt, để tiêu thêm
+        // vẫn thấy thanh nhúc nhích (trước đây bị ép cứng 100% nên đứng im).
+        let fillPct;
+        if (bucket.allocated > 0) {
+          fillPct = negative
+            ? Math.min(100, (-bucket.balance / bucket.allocated) * 100)
+            : Math.min(100, (bucket.balance / bucket.allocated) * 100);
+        } else {
+          fillPct = negative ? 100 : 0;
+        }
         const color = BUCKET_COLORS[i % BUCKET_COLORS.length];
         const meta = bucketMeta(b.label, b.key);
         return `
@@ -1203,7 +1228,7 @@
                     <span class="bucket-item-amount${negative ? " negative" : ""}">${formatCurrency(bucket.balance)}</span>
                   </div>
                   <div class="bucket-item-track">
-                    <div class="bucket-item-fill${negative ? " negative" : ""}" style="width:${negative ? 100 : pct}%"></div>
+                    <div class="bucket-item-fill${negative ? " negative" : ""}" style="width:${fillPct}%"></div>
                   </div>
                 </div>
               </div>
@@ -1764,6 +1789,57 @@
   }
   startDateDisplayEl.textContent = formatDate(localStorage.getItem(START_DATE_KEY));
 
+  /* ---------- báo "người dùng thật" cho sự kiện đua top giới thiệu ---------- */
+  // Mốc người dùng thật = đã MỞ APP ở >= 3 NGÀY THỰC khác nhau VÀ có >= 5 giao
+  // dịch. Dùng "ngày mở app thực" (ghi lại mỗi lần mở) chứ không dùng ngày trên
+  // giao dịch — vì ngày giao dịch sửa được, kẻ gian có thể giả nhiều "ngày" chỉ
+  // trong 1 lần ngồi. Đây là rào cản khiến việc xóa-cài lại tạo mã mới để spam
+  // trở nên quá tốn công (mỗi mã giả phải xài thật nhiều ngày mới được tính).
+  const ACTIVE_DAYS_KEY = "sotuchi.activeDays";
+  const ACTIVITY_REPORT_KEY = "sotuchi.activityReportAt";
+  const ACTIVITY_MIN_DAYS = 3;
+  const ACTIVITY_MIN_TX = 5;
+
+  function trackActiveDay() {
+    let days;
+    try {
+      days = JSON.parse(localStorage.getItem(ACTIVE_DAYS_KEY)) || [];
+    } catch (e) {
+      days = [];
+    }
+    const today = toDateString(new Date());
+    if (!days.includes(today)) {
+      days.push(today);
+      if (days.length > 60) days = days.slice(-60); // giữ danh sách gọn
+      localStorage.setItem(ACTIVE_DAYS_KEY, JSON.stringify(days));
+    }
+  }
+
+  function activeDaysCount() {
+    try {
+      return (JSON.parse(localStorage.getItem(ACTIVE_DAYS_KEY)) || []).length;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  function hasReachedActivityMilestone() {
+    return activeDaysCount() >= ACTIVITY_MIN_DAYS && transactions.length >= ACTIVITY_MIN_TX;
+  }
+
+  function maybeReportActivity() {
+    if (!REFERRAL_ACTIVITY_URL) return; // sự kiện chưa mở / chưa cấu hình
+    if (!hasReachedActivityMilestone()) return; // chưa đủ điều kiện người thật
+    const last = Number(localStorage.getItem(ACTIVITY_REPORT_KEY) || 0);
+    if (Date.now() - last < 6 * 60 * 60 * 1000) return; // đã báo trong 6h gần đây thì thôi
+    localStorage.setItem(ACTIVITY_REPORT_KEY, String(Date.now()));
+    // fire-and-forget: hỏng mạng thì bỏ qua, lần mở sau (sau 6h) sẽ tự thử lại
+    fetch(`${REFERRAL_ACTIVITY_URL}?action=activity&code=${encodeURIComponent(getDeviceId())}`).catch(() => {});
+  }
+
+  trackActiveDay();
+  maybeReportActivity();
+
   /* ---------- chia sẻ ứng dụng ---------- */
 
   const SHARE_URL = "https://meomoney.vercel.app/store.html";
@@ -1789,6 +1865,30 @@
       alert(shareData.url);
     }
   });
+
+  /* ---------- mã giới thiệu / ID tài khoản ---------- */
+  const referralCodeBtn = document.getElementById("referralCodeBtn");
+  const referralCodeValueEl = document.getElementById("referralCodeValue");
+  if (referralCodeBtn && referralCodeValueEl) {
+    referralCodeValueEl.textContent = getDeviceId();
+    let referralResetTimer = null;
+    referralCodeBtn.addEventListener("click", async () => {
+      const code = getDeviceId();
+      try {
+        await navigator.clipboard.writeText(code);
+      } catch (e) {
+        /* một số trình duyệt chặn clipboard: vẫn hiện phản hồi để người dùng chép tay */
+      }
+      const hintEl = referralCodeBtn.querySelector(".referral-code-copy");
+      referralCodeBtn.classList.add("copied");
+      if (hintEl) hintEl.textContent = t("settings.referral.copied");
+      clearTimeout(referralResetTimer);
+      referralResetTimer = setTimeout(() => {
+        referralCodeBtn.classList.remove("copied");
+        if (hintEl) hintEl.textContent = t("settings.referral.copy");
+      }, 1800);
+    });
+  }
 
   /* ---------- quản lý danh mục (chi tiêu / thu nhập) ---------- */
 
@@ -2524,6 +2624,7 @@
     currentMonth = data.date.slice(0, 7);
     monthInput.value = currentMonth;
     renderAll();
+    maybeReportActivity(); // vừa thêm giao dịch có thể vừa chạm mốc "người dùng thật"
     document.dispatchEvent(new CustomEvent("tx:saved"));
     return true;
   }

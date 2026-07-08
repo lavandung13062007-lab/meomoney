@@ -1,0 +1,416 @@
+// ============================================================
+// MEOMONEY — WEB SỰ KIỆN "ĐUA TOP GIỚI THIỆU"
+// ============================================================
+// Đây là 1 web app Google Apps Script ĐỘC LẬP (tách khỏi web xác nhận thanh
+// toán). Người chơi vào web này để: tạo tài khoản, nhập mã giới thiệu của những
+// người mình đã mời, và xem bảng xếp hạng. App MeoMoney sẽ tự âm thầm báo lên
+// đây "máy X đã là người dùng thật" — nên mã spam (vừa xóa-cài lại) nhập vào sẽ
+// KHÔNG được tính cho tới khi máy đó thực sự dùng app đủ nhiều.
+//
+// ---------- CÁCH CÀI ĐẶT ----------
+// 1. Vào sheets.google.com tạo 1 Google Sheet MỚI (trống), đặt tên tùy ý
+//    (ví dụ "MeoMoney Contest"). Không cần tạo tab/cột gì, script tự tạo.
+// 2. Trong sheet: Tiện ích mở rộng > Apps Script.
+// 3. Xóa hết code mẫu, dán TOÀN BỘ nội dung file này vào.
+// 4. Bấm Lưu. (Không bắt buộc chạy hàm nào trước.)
+// 5. Triển khai (Deploy) > Triển khai mới (New deployment):
+//    - Loại: Ứng dụng web (Web app)
+//    - Execute as: Me (email của bạn)
+//    - Who has access: Anyone (BẮT BUỘC, để người chơi và app MeoMoney gọi vào được)
+//    Bấm Triển khai. Lần đầu Google hỏi cấp quyền — chọn tài khoản của bạn >
+//    Advanced/Nâng cao > Go to ... (unsafe) > Allow.
+//    Copy URL dạng https://script.google.com/macros/s/xxxx/exec
+// 6. URL đó chính là TRANG WEB CONTEST — gửi cho người chơi vào.
+// 7. Dán ĐÚNG URL đó vào app MeoMoney: mở app.js, tìm dòng
+//       const REFERRAL_ACTIVITY_URL = "";
+//    sửa thành
+//       const REFERRAL_ACTIVITY_URL = "https://script.google.com/macros/s/xxxx/exec";
+//    rồi push (Vercel tự deploy). Từ đó app sẽ tự báo hoạt động lên contest.
+//
+// LƯU Ý: mỗi lần bạn SỬA code này, phải Deploy > Manage deployments > (bút chì)
+// > Version: New version > Deploy thì thay đổi mới có hiệu lực (URL giữ nguyên).
+//
+// Mốc "người dùng thật" do app MeoMoney tự quyết (mặc định: mở app >= 3 ngày
+// thực khác nhau VÀ >= 5 giao dịch). Contest chỉ nhận cờ "đã thật" từ app.
+// ============================================================
+
+var SHEET_ACTIVE = 'ActiveUsers';   // các mã đã là người dùng thật (whitelist)
+var SHEET_PLAYERS = 'Players';      // tài khoản người chơi
+var SHEET_REFERRALS = 'Referrals';  // mỗi mã đã có người nhận -> 1 dòng
+var LEADERBOARD_SIZE = 30;
+
+// ---------------- tiện ích chung ----------------
+
+function getSheet_(name, headers) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(name);
+  if (!sheet) {
+    sheet = ss.insertSheet(name);
+    sheet.appendRow(headers);
+  }
+  return sheet;
+}
+
+function json_(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
+}
+
+function norm_(s) {
+  return String(s == null ? '' : s).trim().toUpperCase();
+}
+
+function hashPass_(user, pass) {
+  var raw = 'meomoney-contest::' + String(user).toLowerCase() + '::' + String(pass);
+  var bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, raw, Utilities.Charset.UTF_8);
+  var out = '';
+  for (var i = 0; i < bytes.length; i++) {
+    var b = (bytes[i] + 256) % 256;
+    out += (b < 16 ? '0' : '') + b.toString(16);
+  }
+  return out;
+}
+
+function newToken_() {
+  return Utilities.getUuid().replace(/-/g, '');
+}
+
+// ---------------- whitelist người dùng thật ----------------
+
+function recordActivity_(code) {
+  code = norm_(code);
+  if (!/^[A-Z0-9]{4,12}$/.test(code)) return;
+  var sheet = getSheet_(SHEET_ACTIVE, ['Mã', 'Lần đầu', 'Gần nhất']);
+  var data = sheet.getDataRange().getValues();
+  for (var i = 1; i < data.length; i++) {
+    if (norm_(data[i][0]) === code) {
+      sheet.getRange(i + 1, 3).setValue(new Date());
+      return;
+    }
+  }
+  sheet.appendRow([code, new Date(), new Date()]);
+}
+
+function activeCodeSet_() {
+  var sheet = getSheet_(SHEET_ACTIVE, ['Mã', 'Lần đầu', 'Gần nhất']);
+  var data = sheet.getDataRange().getValues();
+  var set = {};
+  for (var i = 1; i < data.length; i++) set[norm_(data[i][0])] = true;
+  return set;
+}
+
+// ---------------- điểm & bảng xếp hạng ----------------
+
+// Trả về { username: soMaHopLe }. Chỉ đếm mã đang nằm trong whitelist.
+function computeCounts_() {
+  var active = activeCodeSet_();
+  var ref = getSheet_(SHEET_REFERRALS, ['Mã', 'Người nhận', 'Thời gian']).getDataRange().getValues();
+  var counts = {};
+  for (var i = 1; i < ref.length; i++) {
+    var code = norm_(ref[i][0]);
+    var by = String(ref[i][1]);
+    if (active[code]) counts[by] = (counts[by] || 0) + 1;
+  }
+  return counts;
+}
+
+function rankedList_() {
+  var counts = computeCounts_();
+  var arr = [];
+  for (var u in counts) arr.push({ username: u, count: counts[u] });
+  arr.sort(function (a, b) {
+    if (b.count !== a.count) return b.count - a.count;
+    return a.username.toLowerCase() < b.username.toLowerCase() ? -1 : 1;
+  });
+  return arr;
+}
+
+// ---------------- API (gọi từ trang web qua google.script.run) ----------------
+
+function apiRegister(user, pass) {
+  user = String(user == null ? '' : user).trim();
+  pass = String(pass == null ? '' : pass);
+  if (user.length < 2 || user.length > 24) return { ok: false, error: 'Tên hiển thị cần 2–24 ký tự.' };
+  if (pass.length < 4) return { ok: false, error: 'Mật khẩu tối thiểu 4 ký tự.' };
+
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var sheet = getSheet_(SHEET_PLAYERS, ['Tên', 'MậtKhẩuHash', 'Token', 'Tạo lúc']);
+    var data = sheet.getDataRange().getValues();
+    var key = user.toLowerCase();
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][0]).toLowerCase() === key) return { ok: false, error: 'Tên này đã có người dùng, chọn tên khác nhé.' };
+    }
+    var tok = newToken_();
+    sheet.appendRow([user, hashPass_(user, pass), tok, new Date()]);
+    return { ok: true, token: tok, username: user };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function apiLogin(user, pass) {
+  user = String(user == null ? '' : user).trim();
+  pass = String(pass == null ? '' : pass);
+  var sheet = getSheet_(SHEET_PLAYERS, ['Tên', 'MậtKhẩuHash', 'Token', 'Tạo lúc']);
+  var data = sheet.getDataRange().getValues();
+  var key = user.toLowerCase();
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][0]).toLowerCase() === key) {
+      if (String(data[i][1]) === hashPass_(String(data[i][0]), pass)) {
+        return { ok: true, token: String(data[i][2]), username: String(data[i][0]) };
+      }
+      return { ok: false, error: 'Sai mật khẩu.' };
+    }
+  }
+  return { ok: false, error: 'Tài khoản không tồn tại.' };
+}
+
+function playerByToken_(token) {
+  token = String(token == null ? '' : token);
+  if (!token) return null;
+  var sheet = getSheet_(SHEET_PLAYERS, ['Tên', 'MậtKhẩuHash', 'Token', 'Tạo lúc']);
+  var data = sheet.getDataRange().getValues();
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][2]) === token) return { row: i + 1, username: String(data[i][0]) };
+  }
+  return null;
+}
+
+function apiSubmit(token, code) {
+  var player = playerByToken_(token);
+  if (!player) return { ok: false, error: 'need-login' };
+  code = norm_(code);
+  if (!/^[A-Z0-9]{4,12}$/.test(code)) return { ok: false, error: 'Mã không hợp lệ (chỉ gồm chữ và số).' };
+
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var sheet = getSheet_(SHEET_REFERRALS, ['Mã', 'Người nhận', 'Thời gian']);
+    var data = sheet.getDataRange().getValues();
+    for (var i = 1; i < data.length; i++) {
+      if (norm_(data[i][0]) === code) {
+        if (String(data[i][1]).toLowerCase() === player.username.toLowerCase()) return { ok: false, error: 'Bạn đã nhập mã này rồi.' };
+        return { ok: false, error: 'Mã này đã được người khác nhập trước.' };
+      }
+    }
+    sheet.appendRow([code, player.username, new Date()]);
+    var isActive = activeCodeSet_()[code] === true;
+    return { ok: true, valid: isActive, status: isActive ? 'valid' : 'pending' };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function apiLeaderboard() {
+  var arr = rankedList_();
+  return { ok: true, top: arr.slice(0, LEADERBOARD_SIZE), totalPlayers: arr.length };
+}
+
+function apiMe(token) {
+  var player = playerByToken_(token);
+  if (!player) return { ok: false, error: 'need-login' };
+  var active = activeCodeSet_();
+  var ref = getSheet_(SHEET_REFERRALS, ['Mã', 'Người nhận', 'Thời gian']).getDataRange().getValues();
+  var codes = [];
+  var validCount = 0;
+  for (var i = 1; i < ref.length; i++) {
+    if (String(ref[i][1]).toLowerCase() === player.username.toLowerCase()) {
+      var code = norm_(ref[i][0]);
+      var ok = active[code] === true;
+      if (ok) validCount++;
+      codes.push({ code: code, valid: ok });
+    }
+  }
+  codes.reverse(); // mới nhất lên đầu
+  // xếp hạng theo số mã hợp lệ
+  var arr = rankedList_();
+  var rank = 0;
+  for (var j = 0; j < arr.length; j++) {
+    if (arr[j].username.toLowerCase() === player.username.toLowerCase()) { rank = j + 1; break; }
+  }
+  return { ok: true, username: player.username, validCount: validCount, pending: codes.length - validCount, rank: rank, codes: codes };
+}
+
+// ---------------- điểm vào web ----------------
+
+function doGet(e) {
+  var action = e && e.parameter && e.parameter.action;
+
+  // App MeoMoney báo hoạt động thật: ?action=activity&code=XXXXXX
+  if (action === 'activity') {
+    recordActivity_(e.parameter.code);
+    return json_({ ok: true });
+  }
+
+  // Không có action -> trả về trang web contest cho người chơi
+  return HtmlService.createHtmlOutput(PAGE_HTML())
+    .setTitle('Đua Top Giới Thiệu MeoMoney')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+}
+
+// ---------------- trang web (HTML + JS phía người chơi) ----------------
+
+function PAGE_HTML() {
+  return [
+'<!DOCTYPE html>',
+'<meta charset="utf-8">',
+'<style>',
+'  :root{--o:#f15a29;--od:#c8451d;--bg:#f3faf5;--sf:#fff;--tx:#14261c;--mut:#6b7c73;--bd:#e4ece6;}',
+'  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}',
+'  body{margin:0;background:var(--bg);color:var(--tx);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:18px;}',
+'  .wrap{max-width:460px;margin:0 auto;display:flex;flex-direction:column;gap:16px;}',
+'  h1{font-size:1.35rem;margin:6px 0 0;text-align:center;letter-spacing:-.02em;}',
+'  .sub{text-align:center;color:var(--mut);font-size:.85rem;margin:0;}',
+'  .card{background:var(--sf);border:1px solid var(--bd);border-radius:18px;padding:16px;}',
+'  .card h2{margin:0 0 12px;font-size:1rem;}',
+'  label{display:block;font-size:.8rem;color:var(--mut);margin:8px 0 4px;}',
+'  input{width:100%;border:1.5px solid var(--bd);border-radius:12px;padding:11px 12px;font-size:1rem;font-family:inherit;color:var(--tx);background:var(--sf);}',
+'  input:focus{outline:none;border-color:var(--o);}',
+'  .code-input{text-transform:uppercase;letter-spacing:.12em;font-weight:700;}',
+'  button{width:100%;border:none;border-radius:12px;padding:13px;font-size:1rem;font-weight:700;font-family:inherit;cursor:pointer;background:var(--o);color:#fff;margin-top:12px;transition:transform .12s ease,opacity .12s ease;}',
+'  button:active{transform:scale(.98);}',
+'  button:disabled{opacity:.5;cursor:default;}',
+'  button.ghost{background:transparent;color:var(--mut);font-weight:600;font-size:.9rem;padding:8px;margin-top:6px;}',
+'  .tabs{display:flex;gap:8px;margin-bottom:6px;}',
+'  .tabs button{margin-top:0;background:var(--bg);color:var(--mut);border:1px solid var(--bd);}',
+'  .tabs button.on{background:var(--o);color:#fff;border-color:var(--o);}',
+'  .msg{font-size:.85rem;margin-top:10px;min-height:1.1em;}',
+'  .msg.err{color:#d33;}',
+'  .msg.ok{color:#1a9d54;}',
+'  .hello{display:flex;justify-content:space-between;align-items:center;gap:10px;}',
+'  .hello b{font-size:1.05rem;}',
+'  .stat{display:flex;gap:10px;margin-top:12px;}',
+'  .stat .box{flex:1;background:var(--bg);border-radius:14px;padding:10px;text-align:center;}',
+'  .stat .n{font-size:1.5rem;font-weight:800;color:var(--od);}',
+'  .stat .l{font-size:.72rem;color:var(--mut);}',
+'  .codes{display:flex;flex-direction:column;gap:6px;margin-top:12px;}',
+'  .code-row{display:flex;justify-content:space-between;align-items:center;background:var(--bg);border-radius:10px;padding:8px 12px;}',
+'  .code-row .c{font-weight:700;letter-spacing:.1em;}',
+'  .badge{font-size:.72rem;font-weight:700;padding:3px 9px;border-radius:999px;}',
+'  .badge.ok{background:#dff5e8;color:#1a9d54;}',
+'  .badge.wait{background:#fdeede;color:#c8451d;}',
+'  table{width:100%;border-collapse:collapse;}',
+'  th,td{text-align:left;padding:9px 6px;font-size:.9rem;border-bottom:1px solid var(--bd);}',
+'  th{color:var(--mut);font-size:.75rem;font-weight:700;text-transform:uppercase;}',
+'  td.r,th.r{text-align:right;font-weight:800;}',
+'  .rankcol{width:34px;color:var(--mut);font-weight:800;}',
+'  .me-row{background:#fff6f1;}',
+'  .empty{color:var(--mut);font-size:.85rem;text-align:center;padding:10px 0;}',
+'  .foot{color:var(--mut);font-size:.75rem;text-align:center;line-height:1.5;}',
+'</style>',
+'<div class="wrap">',
+'  <h1>Đua Top Giới Thiệu 🏆</h1>',
+'  <p class="sub">Mời bạn bè dùng MeoMoney — gom mã, leo top!</p>',
+
+'  <div class="card" id="authCard">',
+'    <div class="tabs">',
+'      <button id="tabLogin" class="on" onclick="setTab(0)">Đăng nhập</button>',
+'      <button id="tabReg" onclick="setTab(1)">Tạo tài khoản</button>',
+'    </div>',
+'    <label>Tên hiển thị</label>',
+'    <input id="au" maxlength="24" placeholder="Tên của bạn trên bảng xếp hạng">',
+'    <label>Mật khẩu</label>',
+'    <input id="ap" type="password" maxlength="40" placeholder="Mật khẩu (để đăng nhập lại sau)">',
+'    <button id="authBtn" onclick="doAuth()">Đăng nhập</button>',
+'    <div id="authMsg" class="msg"></div>',
+'  </div>',
+
+'  <div class="card" id="playCard" style="display:none;">',
+'    <div class="hello"><span>Xin chào, <b id="meName"></b></span><button class="ghost" style="width:auto;margin:0;" onclick="logout()">Đăng xuất</button></div>',
+'    <div class="stat">',
+'      <div class="box"><div class="n" id="meRank">–</div><div class="l">Hạng</div></div>',
+'      <div class="box"><div class="n" id="meValid">0</div><div class="l">Mã hợp lệ</div></div>',
+'      <div class="box"><div class="n" id="mePend">0</div><div class="l">Đang chờ</div></div>',
+'    </div>',
+'    <label style="margin-top:16px;">Nhập mã người bạn đã mời</label>',
+'    <input id="codeIn" class="code-input" maxlength="12" placeholder="VD: 6W9N3P">',
+'    <button id="subBtn" onclick="doSubmit()">Thêm mã này</button>',
+'    <div id="subMsg" class="msg"></div>',
+'    <div class="codes" id="myCodes"></div>',
+'  </div>',
+
+'  <div class="card">',
+'    <h2>Bảng xếp hạng</h2>',
+'    <div id="lb"><div class="empty">Đang tải…</div></div>',
+'  </div>',
+
+'  <p class="foot">Mã chỉ được tính khi người bạn mời đã thực sự dùng app (mở app nhiều ngày &amp; ghi vài giao dịch). Mỗi mã chỉ 1 người nhận được.</p>',
+'</div>',
+
+'<script>',
+'  var TOKEN = localStorage.getItem("meo_ct_token") || "";',
+'  var UNAME = localStorage.getItem("meo_ct_user") || "";',
+'  var tab = 0;',
+'  function $(id){return document.getElementById(id);}',
+'  function setTab(t){tab=t;$("tabLogin").className=t===0?"on":"";$("tabReg").className=t===1?"on":"";$("authBtn").textContent=t===0?"Đăng nhập":"Tạo tài khoản";$("authMsg").textContent="";}',
+'  function busy(id,v){$(id).disabled=v;}',
+'  function fail(id,m){var e=$(id);e.className="msg err";e.textContent=m;}',
+'  function okmsg(id,m){var e=$(id);e.className="msg ok";e.textContent=m;}',
+
+'  function doAuth(){',
+'    var u=$("au").value.trim(), p=$("ap").value;',
+'    if(!u||!p){fail("authMsg","Nhập đủ tên và mật khẩu.");return;}',
+'    busy("authBtn",true);$("authMsg").textContent="Đang xử lý…";$("authMsg").className="msg";',
+'    var fn = tab===0 ? "apiLogin" : "apiRegister";',
+'    google.script.run.withSuccessHandler(function(r){',
+'      busy("authBtn",false);',
+'      if(!r||!r.ok){fail("authMsg",(r&&r.error)||"Có lỗi, thử lại.");return;}',
+'      TOKEN=r.token;UNAME=r.username;localStorage.setItem("meo_ct_token",TOKEN);localStorage.setItem("meo_ct_user",UNAME);',
+'      showPlay();loadMe();loadLb();',
+'    }).withFailureHandler(function(){busy("authBtn",false);fail("authMsg","Lỗi kết nối, thử lại.");})[fn](u,p);',
+'  }',
+
+'  function logout(){TOKEN="";UNAME="";localStorage.removeItem("meo_ct_token");localStorage.removeItem("meo_ct_user");$("authCard").style.display="";$("playCard").style.display="none";$("au").value="";$("ap").value="";loadLb();}',
+
+'  function showPlay(){$("authCard").style.display="none";$("playCard").style.display="";$("meName").textContent=UNAME;}',
+
+'  function doSubmit(){',
+'    var c=$("codeIn").value.trim().toUpperCase();',
+'    if(!c){fail("subMsg","Nhập mã cần thêm.");return;}',
+'    busy("subBtn",true);$("subMsg").textContent="Đang thêm…";$("subMsg").className="msg";',
+'    google.script.run.withSuccessHandler(function(r){',
+'      busy("subBtn",false);',
+'      if(!r||!r.ok){',
+'        if(r&&r.error==="need-login"){logout();fail("authMsg","Phiên đã hết, đăng nhập lại nhé.");return;}',
+'        fail("subMsg",(r&&r.error)||"Có lỗi, thử lại.");return;',
+'      }',
+'      $("codeIn").value="";',
+'      okmsg("subMsg", r.valid ? "Đã thêm — hợp lệ ngay!" : "Đã thêm — đang chờ người này dùng app đủ để được tính.");',
+'      loadMe();loadLb();',
+'    }).withFailureHandler(function(){busy("subBtn",false);fail("subMsg","Lỗi kết nối, thử lại.");}).apiSubmit(TOKEN,c);',
+'  }',
+
+'  function loadMe(){',
+'    if(!TOKEN)return;',
+'    google.script.run.withSuccessHandler(function(r){',
+'      if(!r||!r.ok){if(r&&r.error==="need-login")logout();return;}',
+'      $("meRank").textContent=r.rank>0?("#"+r.rank):"–";',
+'      $("meValid").textContent=r.validCount;',
+'      $("mePend").textContent=r.pending;',
+'      var h="";',
+'      if(!r.codes.length){h=\'<div class="empty">Chưa có mã nào. Xin mã của người bạn mời rồi thêm vào đây.</div>\';}',
+'      for(var i=0;i<r.codes.length;i++){var c=r.codes[i];h+=\'<div class="code-row"><span class="c">\'+c.code+\'</span>\'+(c.valid?\'<span class="badge ok">Hợp lệ</span>\':\'<span class="badge wait">Đang chờ</span>\')+\'</div>\';}',
+'      $("myCodes").innerHTML=h;',
+'    }).apiMe(TOKEN);',
+'  }',
+
+'  function loadLb(){',
+'    google.script.run.withSuccessHandler(function(r){',
+'      if(!r||!r.ok)return;',
+'      if(!r.top.length){$("lb").innerHTML=\'<div class="empty">Chưa có ai ghi điểm. Hãy là người đầu tiên!</div>\';return;}',
+'      var h=\'<table><tr><th class="rankcol">#</th><th>Tên</th><th class="r">Mã hợp lệ</th></tr>\';',
+'      for(var i=0;i<r.top.length;i++){var p=r.top[i];var me=UNAME&&p.username.toLowerCase()===UNAME.toLowerCase();h+=\'<tr class="\'+(me?"me-row":"")+\'"><td class="rankcol">\'+(i+1)+\'</td><td>\'+esc(p.username)+(me?" (bạn)":"")+\'</td><td class="r">\'+p.count+\'</td></tr>\';}',
+'      h+=\'</table>\';$("lb").innerHTML=h;',
+'    }).apiLeaderboard();',
+'  }',
+
+'  function esc(s){var d=document.createElement("div");d.textContent=s;return d.innerHTML;}',
+
+'  if(TOKEN){showPlay();loadMe();}',
+'  loadLb();',
+'  setInterval(loadLb,15000);',
+'  setInterval(function(){if(TOKEN)loadMe();},20000);',
+'</script>'
+  ].join('\n');
+}

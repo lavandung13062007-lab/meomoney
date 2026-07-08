@@ -25,10 +25,9 @@
   }
   body {
     display: flex;
-    align-items: center;
     justify-content: center;
     min-height: 100dvh;
-    padding: 24px;
+    padding: max(24px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom));
   }
   .card {
     width: 100%;
@@ -38,6 +37,10 @@
     align-items: center;
     text-align: center;
     gap: 18px;
+    /* margin auto canh giữa dọc khi nội dung ngắn, nhưng khi nội dung cao hơn
+       màn hình thì margin thu về 0 và trang cuộn được lên đỉnh -> icon không
+       còn bị cắt bởi cạnh trên (lỗi cũ do align-items:center trên body). */
+    margin: auto 0;
   }
   .icon {
     width: 104px;
