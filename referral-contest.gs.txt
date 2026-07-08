@@ -67,6 +67,13 @@ function getSheet_(name, headers) {
   if (!sheet) {
     sheet = ss.insertSheet(name);
     sheet.appendRow(headers);
+    return sheet;
+  }
+  // tự vá thêm tiêu đề cột mới nếu sheet đã có sẵn từ trước (VD lúc code thêm
+  // cột "Liên hệ" sau này) — để cột mới không bị thiếu tên tiêu đề.
+  var lastCol = sheet.getLastColumn();
+  if (lastCol < headers.length) {
+    sheet.getRange(1, lastCol + 1, 1, headers.length - lastCol).setValues([headers.slice(lastCol)]);
   }
   return sheet;
 }
@@ -146,23 +153,29 @@ function rankedList_() {
 
 // ---------------- API (gọi từ trang web qua google.script.run) ----------------
 
-function apiRegister(user, pass) {
+// Cột "Liên hệ" (SĐT/Zalo) là BẮT BUỘC khi tạo tài khoản — để admin liên lạc
+// trao giải cho top 1/2/3 khi sự kiện kết thúc. Mở sheet "Players" để xem.
+var PLAYERS_HEADERS = ['Tên', 'MậtKhẩuHash', 'Token', 'Tạo lúc', 'Liên hệ'];
+
+function apiRegister(user, pass, contact) {
   user = String(user == null ? '' : user).trim();
   pass = String(pass == null ? '' : pass);
+  contact = String(contact == null ? '' : contact).trim();
   if (user.length < 2 || user.length > 24) return { ok: false, error: 'Tên hiển thị cần 2–24 ký tự.' };
   if (pass.length < 4) return { ok: false, error: 'Mật khẩu tối thiểu 4 ký tự.' };
+  if (contact.length < 4) return { ok: false, error: 'Nhập số điện thoại hoặc Zalo để mình liên hệ khi bạn trúng giải.' };
 
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
-    var sheet = getSheet_(SHEET_PLAYERS, ['Tên', 'MậtKhẩuHash', 'Token', 'Tạo lúc']);
+    var sheet = getSheet_(SHEET_PLAYERS, PLAYERS_HEADERS);
     var data = sheet.getDataRange().getValues();
     var key = user.toLowerCase();
     for (var i = 1; i < data.length; i++) {
       if (String(data[i][0]).toLowerCase() === key) return { ok: false, error: 'Tên này đã có người dùng, chọn tên khác nhé.' };
     }
     var tok = newToken_();
-    sheet.appendRow([user, hashPass_(user, pass), tok, new Date()]);
+    sheet.appendRow([user, hashPass_(user, pass), tok, new Date(), contact]);
     return { ok: true, token: tok, username: user };
   } finally {
     lock.releaseLock();
@@ -172,7 +185,7 @@ function apiRegister(user, pass) {
 function apiLogin(user, pass) {
   user = String(user == null ? '' : user).trim();
   pass = String(pass == null ? '' : pass);
-  var sheet = getSheet_(SHEET_PLAYERS, ['Tên', 'MậtKhẩuHash', 'Token', 'Tạo lúc']);
+  var sheet = getSheet_(SHEET_PLAYERS, PLAYERS_HEADERS);
   var data = sheet.getDataRange().getValues();
   var key = user.toLowerCase();
   for (var i = 1; i < data.length; i++) {
@@ -189,7 +202,7 @@ function apiLogin(user, pass) {
 function playerByToken_(token) {
   token = String(token == null ? '' : token);
   if (!token) return null;
-  var sheet = getSheet_(SHEET_PLAYERS, ['Tên', 'MậtKhẩuHash', 'Token', 'Tạo lúc']);
+  var sheet = getSheet_(SHEET_PLAYERS, PLAYERS_HEADERS);
   var data = sheet.getDataRange().getValues();
   for (var i = 1; i < data.length; i++) {
     if (String(data[i][2]) === token) return { row: i + 1, username: String(data[i][0]) };
@@ -223,7 +236,7 @@ function apiSubmit(token, code) {
 }
 
 function totalPlayersCount_() {
-  var sheet = getSheet_(SHEET_PLAYERS, ['Tên', 'MậtKhẩuHash', 'Token', 'Tạo lúc']);
+  var sheet = getSheet_(SHEET_PLAYERS, PLAYERS_HEADERS);
   var n = sheet.getLastRow() - 1;
   return n > 0 ? n : 0;
 }
@@ -368,7 +381,7 @@ function PAGE_HTML() {
 '        <li>Sau khi bạn bè cài MeoMoney và dùng vài ngày, họ vào app → Cài đặt → chạm vào "Mã giới thiệu của bạn" để sao chép mã.</li>',
 '        <li>Xin mã đó từ họ, rồi tạo tài khoản/đăng nhập ở trang này và nhập mã vào ô "Nhập mã người bạn đã mời".</li>',
 '        <li>Mã chỉ được TÍNH ĐIỂM khi người được mời đã thực sự dùng app đủ nhiều (chống mã ảo/spam) — mã mới nhập sẽ ở trạng thái "Đang chờ" cho tới lúc đó.</li>',
-'        <li>Ai có nhiều mã hợp lệ nhất khi kết thúc sự kiện sẽ thắng giải.</li>',
+'        <li>Ai có nhiều mã hợp lệ nhất khi kết thúc sự kiện sẽ thắng giải. Nhớ điền đúng SĐT/Zalo lúc tạo tài khoản — đây là cách mình liên hệ trao giải cho top 1-2-3.</li>',
 '      </ol>',
 '    </details>',
 '  </div>',
@@ -390,6 +403,10 @@ function PAGE_HTML() {
 '    <input id="au" maxlength="24" placeholder="Tên của bạn trên bảng xếp hạng">',
 '    <label>Mật khẩu</label>',
 '    <input id="ap" type="password" maxlength="40" placeholder="Mật khẩu (để đăng nhập lại sau)">',
+'    <div id="contactField" style="display:none;">',
+'      <label>SĐT hoặc Zalo liên hệ</label>',
+'      <input id="ac" maxlength="40" placeholder="Để mình liên hệ nếu bạn lọt top thưởng">',
+'    </div>',
 '    <button id="authBtn" onclick="doAuth()">Đăng nhập</button>',
 '    <div id="authMsg" class="msg"></div>',
 '  </div>',
@@ -424,7 +441,7 @@ function PAGE_HTML() {
 '  var CONTEST_END = new Date(' + JSON.stringify(CONTEST_END_ISO) + ');',
 '  var tab = 0;',
 '  function $(id){return document.getElementById(id);}',
-'  function setTab(t){tab=t;$("tabLogin").className=t===0?"on":"";$("tabReg").className=t===1?"on":"";$("authBtn").textContent=t===0?"Đăng nhập":"Tạo tài khoản";$("authMsg").textContent="";}',
+'  function setTab(t){tab=t;$("tabLogin").className=t===0?"on":"";$("tabReg").className=t===1?"on":"";$("authBtn").textContent=t===0?"Đăng nhập":"Tạo tài khoản";$("authMsg").textContent="";$("contactField").style.display=t===1?"":"none";}',
 '  function busy(id,v){$(id).disabled=v;}',
 '  function fail(id,m){var e=$(id);e.className="msg err";e.textContent=m;}',
 '  function okmsg(id,m){var e=$(id);e.className="msg ok";e.textContent=m;}',
@@ -439,8 +456,9 @@ function PAGE_HTML() {
 '  }',
 
 '  function doAuth(){',
-'    var u=$("au").value.trim(), p=$("ap").value;',
+'    var u=$("au").value.trim(), p=$("ap").value, c=$("ac").value.trim();',
 '    if(!u||!p){fail("authMsg","Nhập đủ tên và mật khẩu.");return;}',
+'    if(tab===1&&c.length<4){fail("authMsg","Nhập SĐT hoặc Zalo để mình liên hệ khi bạn trúng giải.");return;}',
 '    busy("authBtn",true);$("authMsg").textContent="Đang xử lý…";$("authMsg").className="msg";',
 '    var fn = tab===0 ? "apiLogin" : "apiRegister";',
 '    google.script.run.withSuccessHandler(function(r){',
@@ -448,10 +466,10 @@ function PAGE_HTML() {
 '      if(!r||!r.ok){fail("authMsg",(r&&r.error)||"Có lỗi, thử lại.");return;}',
 '      TOKEN=r.token;UNAME=r.username;localStorage.setItem("meo_ct_token",TOKEN);localStorage.setItem("meo_ct_user",UNAME);',
 '      showPlay();loadMe();loadLb();',
-'    }).withFailureHandler(function(){busy("authBtn",false);fail("authMsg","Lỗi kết nối, thử lại.");})[fn](u,p);',
+'    }).withFailureHandler(function(){busy("authBtn",false);fail("authMsg","Lỗi kết nối, thử lại.");})[fn](u,p,c);',
 '  }',
 
-'  function logout(){TOKEN="";UNAME="";localStorage.removeItem("meo_ct_token");localStorage.removeItem("meo_ct_user");$("authCard").style.display="";$("playCard").style.display="none";$("au").value="";$("ap").value="";loadLb();}',
+'  function logout(){TOKEN="";UNAME="";localStorage.removeItem("meo_ct_token");localStorage.removeItem("meo_ct_user");$("authCard").style.display="";$("playCard").style.display="none";$("au").value="";$("ap").value="";$("ac").value="";loadLb();}',
 
 '  function showPlay(){$("authCard").style.display="none";$("playCard").style.display="";$("meName").textContent=UNAME;}',
 
