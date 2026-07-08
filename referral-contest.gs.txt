@@ -47,6 +47,14 @@ var PRIZES = [
   { rank: 3, amount: 15000 },
 ];
 
+// ⏳ THỜI ĐIỂM KẾT THÚC SỰ KIỆN — MUỐN ĐỔI LỊCH, CHỈ SỬA DÒNG NÀY.
+// Định dạng bắt buộc: 'YYYY-MM-DDTHH:mm:ss+07:00'  (giờ Việt Nam, giữ nguyên +07:00)
+//   YYYY = năm 4 số, MM = tháng 2 số, DD = ngày 2 số, HH:mm:ss = giờ:phút:giây 2 số
+// Ví dụ sự kiện kết thúc 23:59:59 ngày 31/08/2026 → '2026-08-31T23:59:59+07:00'
+// Sau khi sửa: Deploy > Manage deployments > (bút chì) > Version: New version
+// > Deploy thì trang web mới thấy ngày mới (URL không đổi).
+var CONTEST_END_ISO = '2026-08-31T23:59:59+07:00';
+
 function fmtVnd_(n) {
   return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' đ';
 }
@@ -336,10 +344,19 @@ function PAGE_HTML() {
 '  .prize-row{display:flex;justify-content:space-between;align-items:center;background:var(--bg);border-radius:12px;padding:11px 14px;font-size:.95rem;font-weight:600;}',
 '  .prize-row b{color:var(--od);font-size:1.05rem;font-weight:800;}',
 '  .lbstats{font-size:.82rem;color:var(--mut);margin:-6px 0 12px;}',
+'  .countdown-card{text-align:center;background:linear-gradient(135deg,var(--o),var(--od));border:none;}',
+'  .countdown-label{font-size:.8rem;color:#ffffffcc;margin-bottom:4px;font-weight:600;}',
+'  .countdown-value{font-size:1.5rem;font-weight:800;color:#fff;letter-spacing:.02em;font-variant-numeric:tabular-nums;}',
+'  .countdown-value.ended{font-size:1.15rem;}',
 '</style>',
 '<div class="wrap">',
 '  <h1>Đua Top Giới Thiệu 🏆</h1>',
 '  <p class="sub">Mời bạn bè dùng MeoMoney — gom mã, leo top!</p>',
+
+'  <div class="card countdown-card">',
+'    <div class="countdown-label">⏳ Thời gian còn lại</div>',
+'    <div class="countdown-value" id="countdownValue">–</div>',
+'  </div>',
 
 '  <div class="card">',
 '    <button id="shareBtn" onclick="doShare()">📤 Chia sẻ link mời bạn cài app</button>',
@@ -404,6 +421,7 @@ function PAGE_HTML() {
 '  var TOKEN = localStorage.getItem("meo_ct_token") || "";',
 '  var UNAME = localStorage.getItem("meo_ct_user") || "";',
 '  var APP_STORE_URL = "https://meomoney.vercel.app/store.html";',
+'  var CONTEST_END = new Date(' + JSON.stringify(CONTEST_END_ISO) + ');',
 '  var tab = 0;',
 '  function $(id){return document.getElementById(id);}',
 '  function setTab(t){tab=t;$("tabLogin").className=t===0?"on":"";$("tabReg").className=t===1?"on":"";$("authBtn").textContent=t===0?"Đăng nhập":"Tạo tài khoản";$("authMsg").textContent="";}',
@@ -480,10 +498,25 @@ function PAGE_HTML() {
 
 '  function esc(s){var d=document.createElement("div");d.textContent=s;return d.innerHTML;}',
 
+'  function pad2(n){return (n<10?"0":"")+n;}',
+'  function updateCountdown(){',
+'    var el=$("countdownValue");',
+'    var diff=CONTEST_END.getTime()-Date.now();',
+'    if(diff<=0){el.textContent="Sự kiện đã kết thúc";el.className="countdown-value ended";return;}',
+'    var sec=Math.floor(diff/1000);',
+'    var d=Math.floor(sec/86400);sec-=d*86400;',
+'    var h=Math.floor(sec/3600);sec-=h*3600;',
+'    var m=Math.floor(sec/60);sec-=m*60;',
+'    var s=sec;',
+'    el.textContent=(d>0?d+" ngày ":"")+pad2(h)+":"+pad2(m)+":"+pad2(s);',
+'  }',
+
 '  if(TOKEN){showPlay();loadMe();}',
 '  loadLb();',
 '  setInterval(loadLb,15000);',
 '  setInterval(function(){if(TOKEN)loadMe();},20000);',
+'  if(isNaN(CONTEST_END.getTime())){$("countdownValue").textContent="(chưa đặt lịch)";}',
+'  else{updateCountdown();setInterval(updateCountdown,1000);}',
 '</script>'
   ].join('\n');
 }
