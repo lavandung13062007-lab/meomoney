@@ -751,6 +751,8 @@ body {
 .modal-overlay[hidden] {
   display: none;
 }
+#goalAmountOverlay,
+#quickNoteAmountOverlay { z-index: 60; }
 .sheet {
   background: var(--surface);
   width: 100%;
@@ -1249,6 +1251,17 @@ body {
   font-family: inherit;
 }
 .cat-add-btn { flex: 0 0 auto; padding: 9px 16px; }
+.quick-note-amount-btn {
+  text-align: left;
+  cursor: pointer;
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 700;
+}
+.quick-note-amount-btn.empty {
+  font-weight: 400;
+  color: var(--text-muted);
+}
 
 .quick-note-form {
   display: flex;
@@ -2083,7 +2096,7 @@ body {
   color: var(--text-muted);
   line-height: 1.4;
 }
-.goal-form-sheet { overflow-y: auto; }
+.goal-form-sheet { overflow-y: auto; position: relative; padding-top: 44px; }
 .goal-form-error {
   margin: 4px 0 0;
   padding: 8px 12px;
@@ -2128,6 +2141,41 @@ body {
   background: var(--surface);
   color: var(--text);
 }
+.goal-stage-amount {
+  text-align: left;
+  cursor: pointer;
+  font-weight: 700;
+}
+.goal-stage-amount.empty {
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.goal-stages-stepper {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 8px;
+}
+.goal-stages-stepper span {
+  font-size: 1.05rem;
+  font-weight: 700;
+  min-width: 20px;
+  text-align: center;
+}
+.stepper-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--primary);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.stepper-btn:active { transform: scale(0.92); }
+.stepper-btn:disabled { opacity: 0.4; cursor: default; }
 
 /* Custom formula setup sheet */
 .custom-formula-sub { margin: 0 0 12px; color: var(--text-muted); font-size: 0.85rem; }

@@ -204,6 +204,7 @@
     "goals.daysPassed": ["Đã qua {n} ngày", "{n} days passed"],
     "goals.daysLeft": ["Còn {n} ngày", "{n} days left"],
     "goals.amountPlaceholder": ["Số tiền", "Amount"],
+    "goals.amountSheetTitle": ["Số tiền giai đoạn", "Stage amount"],
     "goals.error.name": ["Vui lòng nhập tên mục tiêu", "Please enter a goal name"],
     "goals.error.pledge": ["Vui lòng viết lời cam kết", "Please write a pledge"],
     "goals.error.dateOrder": [
@@ -305,6 +306,7 @@
     ],
     "quickNote.name.placeholder": ["Tên, vd: Gửi xe", "Name, e.g.: Parking"],
     "quickNote.amount.placeholder": ["Số tiền, vd: 5.000", "Amount, e.g.: 5,000"],
+    "quickNote.amountSheetTitle": ["Số tiền ghi chú nhanh", "Quick note amount"],
     "quickNote.add": ["Thêm ghi chú nhanh", "Add quick note"],
     "quickNote.delete.aria": ["Xóa", "Delete"],
     "quickNote.other": ["Khác", "Other"],
@@ -771,10 +773,19 @@
   const goalFormOverlay = document.getElementById("goalFormOverlay");
   const goalNameInput = document.getElementById("goalNameInput");
   const goalStagesInput = document.getElementById("goalStagesInput");
+  const goalStagesValueEl = document.getElementById("goalStagesValue");
+  const goalStagesMinusBtn = document.getElementById("goalStagesMinus");
+  const goalStagesPlusBtn = document.getElementById("goalStagesPlus");
   const goalStageRowsEl = document.getElementById("goalStageRows");
+  const goalAmountOverlay = document.getElementById("goalAmountOverlay");
+  const goalAmountKeypadEl = document.getElementById("goalAmountKeypad");
+  const goalAmountSheetValueEl = document.getElementById("goalAmountSheetValue");
+  const goalAmountSheetCancelBtn = document.getElementById("goalAmountSheetCancel");
+  const goalAmountSheetSaveBtn = document.getElementById("goalAmountSheetSave");
   const goalPledgeInput = document.getElementById("goalPledgeInput");
   const goalFormSaveBtn = document.getElementById("goalFormSave");
   const goalFormCancelBtn = document.getElementById("goalFormCancel");
+  const goalFormCloseBtn = document.getElementById("goalFormClose");
   const goalFormErrorEl = document.getElementById("goalFormError");
   const soundToggle = document.getElementById("soundToggle");
   const noteToggle = document.getElementById("noteToggle");
@@ -808,8 +819,14 @@
   const quickNoteManagerCloseBtn = document.getElementById("quickNoteManagerClose");
   const newQuickNoteInput = document.getElementById("newQuickNoteInput");
   const newQuickNoteAmountInput = document.getElementById("newQuickNoteAmount");
+  const newQuickNoteAmountBtn = document.getElementById("newQuickNoteAmountBtn");
   const newQuickNoteBucketSelect = document.getElementById("newQuickNoteBucket");
   const newQuickNoteSaveBtn = document.getElementById("newQuickNoteSave");
+  const quickNoteAmountOverlay = document.getElementById("quickNoteAmountOverlay");
+  const quickNoteAmountKeypadEl = document.getElementById("quickNoteAmountKeypad");
+  const quickNoteAmountSheetValueEl = document.getElementById("quickNoteAmountSheetValue");
+  const quickNoteAmountSheetCancelBtn = document.getElementById("quickNoteAmountSheetCancel");
+  const quickNoteAmountSheetSaveBtn = document.getElementById("quickNoteAmountSheetSave");
 
   const homeTabsEl = document.getElementById("homeTabs");
   const homeTabButtons = document.querySelectorAll(".home-tab");
@@ -1501,6 +1518,7 @@
   function openQuickNoteManager() {
     newQuickNoteInput.value = "";
     newQuickNoteAmountInput.value = "";
+    renderQuickNoteAmountBtn();
     renderQuickNoteBucketOptions();
     renderQuickNoteManagerList();
     quickNoteManagerOverlay.hidden = false;
@@ -1541,20 +1559,69 @@
     updateQuickNoteStripVisibility();
   });
 
-  newQuickNoteAmountInput.addEventListener("input", () => {
-    const digits = newQuickNoteAmountInput.value.replace(/\D/g, "");
-    newQuickNoteAmountInput.value = digits ? Number(digits).toLocaleString("vi-VN") : "";
+  // Số tiền dùng bàn phím riêng của app (bàn phím hệ điều hành không bật được trên một số máy/PWA)
+  let quickNoteAmountBuffer = "";
+
+  function renderQuickNoteAmountBtn() {
+    const amount = Number(newQuickNoteAmountInput.value || 0);
+    if (amount > 0) {
+      newQuickNoteAmountBtn.textContent = `${amount.toLocaleString("vi-VN")} ₫`;
+      newQuickNoteAmountBtn.classList.remove("empty");
+    } else {
+      newQuickNoteAmountBtn.textContent = t("quickNote.amount.placeholder");
+      newQuickNoteAmountBtn.classList.add("empty");
+    }
+  }
+
+  function renderQuickNoteAmountSheet() {
+    quickNoteAmountSheetValueEl.textContent = Number(quickNoteAmountBuffer || "0").toLocaleString("vi-VN");
+  }
+
+  newQuickNoteAmountBtn.addEventListener("click", () => {
+    quickNoteAmountBuffer = newQuickNoteAmountInput.value ? String(Number(newQuickNoteAmountInput.value)) : "";
+    renderQuickNoteAmountSheet();
+    quickNoteAmountOverlay.hidden = false;
+  });
+
+  quickNoteAmountKeypadEl.addEventListener("click", (e) => {
+    const btn = e.target.closest(".key");
+    if (!btn) return;
+    playKeyClick();
+    const key = btn.dataset.key;
+    if (key === "back") {
+      quickNoteAmountBuffer = quickNoteAmountBuffer.slice(0, -1);
+    } else if (key === "000") {
+      if (quickNoteAmountBuffer) quickNoteAmountBuffer = (quickNoteAmountBuffer + "000").slice(0, MAX_AMOUNT_DIGITS);
+    } else {
+      if (quickNoteAmountBuffer.length >= MAX_AMOUNT_DIGITS) return;
+      quickNoteAmountBuffer = (quickNoteAmountBuffer === "0" ? "" : quickNoteAmountBuffer) + key;
+    }
+    renderQuickNoteAmountSheet();
+  });
+
+  quickNoteAmountSheetCancelBtn.addEventListener("click", () => {
+    quickNoteAmountOverlay.hidden = true;
+  });
+  quickNoteAmountOverlay.addEventListener("click", (e) => {
+    if (e.target === quickNoteAmountOverlay) quickNoteAmountOverlay.hidden = true;
+  });
+
+  quickNoteAmountSheetSaveBtn.addEventListener("click", () => {
+    newQuickNoteAmountInput.value = quickNoteAmountBuffer || "0";
+    renderQuickNoteAmountBtn();
+    quickNoteAmountOverlay.hidden = true;
   });
 
   newQuickNoteSaveBtn.addEventListener("click", () => {
     const label = newQuickNoteInput.value.trim();
-    const amount = Number(newQuickNoteAmountInput.value.replace(/\D/g, "")) || 0;
+    const amount = Number(newQuickNoteAmountInput.value) || 0;
     const category = newQuickNoteBucketSelect.value;
     if (!label || amount <= 0 || !category) return;
     quickNotes.push({ label, amount, category });
     saveQuickNotes();
     newQuickNoteInput.value = "";
     newQuickNoteAmountInput.value = "";
+    renderQuickNoteAmountBtn();
     renderQuickNoteManagerList();
     renderQuickNoteStrip();
     updateQuickNoteStripVisibility();
@@ -2689,6 +2756,9 @@
     const n = Math.min(10, Math.max(1, Number(goalStagesInput.value) || 1));
     while (goalStageDrafts.length < n) goalStageDrafts.push({ amount: 0, date: "" });
     goalStageDrafts.length = n;
+    goalStagesValueEl.textContent = n;
+    goalStagesMinusBtn.disabled = n <= 1;
+    goalStagesPlusBtn.disabled = n >= 10;
 
     goalStageRowsEl.innerHTML = goalStageDrafts
       .map(
@@ -2696,7 +2766,7 @@
         <div class="goal-stage-row" data-index="${i}">
           <div class="goal-stage-row-label">${t("goals.stage")} ${i + 1}</div>
           <div class="goal-stage-row-fields">
-            <input type="text" inputmode="numeric" class="goal-stage-amount" placeholder="${t("goals.amountPlaceholder")}" value="${s.amount ? Number(s.amount).toLocaleString("vi-VN") : ""}">
+            <button type="button" class="goal-stage-amount${s.amount ? "" : " empty"}" data-index="${i}">${s.amount ? Number(s.amount).toLocaleString("vi-VN") + " ₫" : t("goals.amountPlaceholder")}</button>
             <input type="date" class="goal-stage-date" value="${s.date || ""}">
           </div>
         </div>`
@@ -2704,17 +2774,76 @@
       .join("");
   }
 
+  // Số tiền dùng bàn phím riêng của app (bàn phím hệ điều hành không bật được trên một số máy/PWA)
+  let goalAmountBuffer = "";
+  let goalAmountEditIndex = -1;
+
+  function renderGoalAmountSheet() {
+    goalAmountSheetValueEl.textContent = Number(goalAmountBuffer || "0").toLocaleString("vi-VN");
+  }
+
+  function openGoalAmountSheet(i) {
+    goalAmountEditIndex = i;
+    goalAmountBuffer = goalStageDrafts[i].amount ? String(goalStageDrafts[i].amount) : "";
+    renderGoalAmountSheet();
+    goalAmountOverlay.hidden = false;
+  }
+
+  goalStageRowsEl.addEventListener("click", (e) => {
+    const btn = e.target.closest(".goal-stage-amount");
+    if (!btn) return;
+    openGoalAmountSheet(Number(btn.dataset.index));
+  });
+
+  goalAmountKeypadEl.addEventListener("click", (e) => {
+    const btn = e.target.closest(".key");
+    if (!btn) return;
+    playKeyClick();
+    const key = btn.dataset.key;
+    if (key === "back") {
+      goalAmountBuffer = goalAmountBuffer.slice(0, -1);
+    } else if (key === "000") {
+      if (goalAmountBuffer) goalAmountBuffer = (goalAmountBuffer + "000").slice(0, MAX_AMOUNT_DIGITS);
+    } else {
+      if (goalAmountBuffer.length >= MAX_AMOUNT_DIGITS) return;
+      goalAmountBuffer = (goalAmountBuffer === "0" ? "" : goalAmountBuffer) + key;
+    }
+    renderGoalAmountSheet();
+  });
+
+  goalAmountSheetCancelBtn.addEventListener("click", () => {
+    goalAmountOverlay.hidden = true;
+  });
+  goalAmountOverlay.addEventListener("click", (e) => {
+    if (e.target === goalAmountOverlay) goalAmountOverlay.hidden = true;
+  });
+
+  goalAmountSheetSaveBtn.addEventListener("click", () => {
+    if (goalAmountEditIndex < 0) return;
+    goalStageDrafts[goalAmountEditIndex].amount = Number(goalAmountBuffer || "0");
+    goalAmountOverlay.hidden = true;
+    renderGoalStageRows();
+    updateGoalFormValidity();
+  });
+
   goalStageRowsEl.addEventListener("input", (e) => {
     const row = e.target.closest(".goal-stage-row");
     if (!row) return;
     const i = Number(row.dataset.index);
-    if (e.target.classList.contains("goal-stage-amount")) {
-      const digits = e.target.value.replace(/\D/g, "");
-      e.target.value = digits ? Number(digits).toLocaleString("vi-VN") : "";
-      goalStageDrafts[i].amount = Number(digits) || 0;
-    } else if (e.target.classList.contains("goal-stage-date")) {
+    if (e.target.classList.contains("goal-stage-date")) {
       goalStageDrafts[i].date = e.target.value;
     }
+    updateGoalFormValidity();
+  });
+
+  goalStagesMinusBtn.addEventListener("click", () => {
+    goalStagesInput.value = Math.max(1, Number(goalStagesInput.value) - 1);
+    renderGoalStageRows();
+    updateGoalFormValidity();
+  });
+  goalStagesPlusBtn.addEventListener("click", () => {
+    goalStagesInput.value = Math.min(10, Number(goalStagesInput.value) + 1);
+    renderGoalStageRows();
     updateGoalFormValidity();
   });
 
@@ -2766,13 +2895,10 @@
 
   goalNameInput.addEventListener("input", updateGoalFormValidity);
   goalPledgeInput.addEventListener("input", updateGoalFormValidity);
-  goalStagesInput.addEventListener("input", () => {
-    renderGoalStageRows();
-    updateGoalFormValidity();
-  });
 
   addGoalBtn.addEventListener("click", openGoalForm);
   goalFormCancelBtn.addEventListener("click", closeGoalForm);
+  goalFormCloseBtn.addEventListener("click", closeGoalForm);
   goalFormOverlay.addEventListener("click", (e) => {
     if (e.target === goalFormOverlay) closeGoalForm();
   });

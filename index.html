@@ -553,6 +553,64 @@
   </div>
 </div>
 
+<div id="goalAmountOverlay" class="modal-overlay" hidden>
+  <div class="sheet balance-sheet" role="dialog" aria-modal="true" aria-labelledby="goalAmountSheetTitle">
+    <h2 id="goalAmountSheetTitle" data-i18n="goals.amountSheetTitle">Số tiền giai đoạn</h2>
+    <div class="amount-display onboarding-amount-display">
+      <span id="goalAmountSheetValue">0</span><span class="amount-currency">₫</span>
+    </div>
+    <div class="keypad" id="goalAmountKeypad">
+      <button type="button" class="key" data-key="7">7</button>
+      <button type="button" class="key" data-key="8">8</button>
+      <button type="button" class="key" data-key="9">9</button>
+      <button type="button" class="key" data-key="4">4</button>
+      <button type="button" class="key" data-key="5">5</button>
+      <button type="button" class="key" data-key="6">6</button>
+      <button type="button" class="key" data-key="1">1</button>
+      <button type="button" class="key" data-key="2">2</button>
+      <button type="button" class="key" data-key="3">3</button>
+      <button type="button" class="key key-alt" data-key="000">000</button>
+      <button type="button" class="key" data-key="0">0</button>
+      <button type="button" class="key key-alt" data-key="back" data-i18n-aria="tx.backspace.aria" aria-label="Xóa 1 số">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 5H8l-6 7 6 7h14a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1z"/><path d="M13 9l6 6M19 9l-6 6"/></svg>
+      </button>
+    </div>
+    <div class="modal-actions">
+      <button type="button" id="goalAmountSheetCancel" class="btn btn-danger" data-i18n="customFormula.cancel">Hủy</button>
+      <button type="button" id="goalAmountSheetSave" class="btn btn-primary" data-i18n="tx.save">Lưu</button>
+    </div>
+  </div>
+</div>
+
+<div id="quickNoteAmountOverlay" class="modal-overlay" hidden>
+  <div class="sheet balance-sheet" role="dialog" aria-modal="true" aria-labelledby="quickNoteAmountSheetTitle">
+    <h2 id="quickNoteAmountSheetTitle" data-i18n="quickNote.amountSheetTitle">Số tiền ghi chú nhanh</h2>
+    <div class="amount-display onboarding-amount-display">
+      <span id="quickNoteAmountSheetValue">0</span><span class="amount-currency">₫</span>
+    </div>
+    <div class="keypad" id="quickNoteAmountKeypad">
+      <button type="button" class="key" data-key="7">7</button>
+      <button type="button" class="key" data-key="8">8</button>
+      <button type="button" class="key" data-key="9">9</button>
+      <button type="button" class="key" data-key="4">4</button>
+      <button type="button" class="key" data-key="5">5</button>
+      <button type="button" class="key" data-key="6">6</button>
+      <button type="button" class="key" data-key="1">1</button>
+      <button type="button" class="key" data-key="2">2</button>
+      <button type="button" class="key" data-key="3">3</button>
+      <button type="button" class="key key-alt" data-key="000">000</button>
+      <button type="button" class="key" data-key="0">0</button>
+      <button type="button" class="key key-alt" data-key="back" data-i18n-aria="tx.backspace.aria" aria-label="Xóa 1 số">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 5H8l-6 7 6 7h14a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1z"/><path d="M13 9l6 6M19 9l-6 6"/></svg>
+      </button>
+    </div>
+    <div class="modal-actions">
+      <button type="button" id="quickNoteAmountSheetCancel" class="btn btn-danger" data-i18n="customFormula.cancel">Hủy</button>
+      <button type="button" id="quickNoteAmountSheetSave" class="btn btn-primary" data-i18n="tx.save">Lưu</button>
+    </div>
+  </div>
+</div>
+
 <div id="customFormulaOverlay" class="modal-overlay" hidden>
   <div class="sheet custom-formula-sheet" role="dialog" aria-modal="true" aria-labelledby="customFormulaTitle">
     <h2 id="customFormulaTitle" data-i18n="customFormula.title">Tự đặt công thức</h2>
@@ -589,7 +647,8 @@
     <div id="quickNoteManagerList" class="category-manager-list"></div>
     <div class="quick-note-form">
       <input type="text" id="newQuickNoteInput" class="cat-label-input" placeholder="Tên, vd: Gửi xe" maxlength="24" data-i18n-ph="quickNote.name.placeholder">
-      <input type="text" inputmode="numeric" id="newQuickNoteAmount" class="cat-label-input" placeholder="Số tiền, vd: 5.000" data-i18n-ph="quickNote.amount.placeholder">
+      <button type="button" id="newQuickNoteAmountBtn" class="cat-label-input quick-note-amount-btn empty">Số tiền, vd: 5.000</button>
+      <input type="hidden" id="newQuickNoteAmount">
       <select id="newQuickNoteBucket" class="quick-note-bucket-select"></select>
       <button type="button" id="newQuickNoteSave" class="btn btn-primary cat-add-btn" data-i18n="quickNote.add">Thêm ghi chú nhanh</button>
     </div>
@@ -599,6 +658,7 @@
 
 <div id="goalFormOverlay" class="modal-overlay" hidden>
   <div class="sheet goal-form-sheet" role="dialog" aria-modal="true" aria-labelledby="goalFormTitle">
+    <button type="button" id="goalFormClose" class="icon-btn upgrade-close" aria-label="Đóng">✕</button>
     <h2 id="goalFormTitle" data-i18n="goals.formTitle">Đặt mục tiêu mới</h2>
     <p class="goal-warning" data-i18n="goals.warning">⚠️ Mục tiêu chỉ mang tính chất quan sát, không giúp bạn kiếm được nhiều tiền hơn.</p>
 
@@ -608,8 +668,13 @@
     </div>
 
     <div class="field">
-      <label for="goalStagesInput" data-i18n="goals.stages">Số giai đoạn</label>
-      <input type="number" id="goalStagesInput" min="1" max="10" value="4">
+      <label data-i18n="goals.stages">Số giai đoạn</label>
+      <div class="goal-stages-stepper">
+        <button type="button" id="goalStagesMinus" class="stepper-btn" aria-label="Giảm">−</button>
+        <span id="goalStagesValue">4</span>
+        <button type="button" id="goalStagesPlus" class="stepper-btn" aria-label="Tăng">+</button>
+      </div>
+      <input type="hidden" id="goalStagesInput" value="4">
     </div>
 
     <div id="goalStageRows" class="goal-stage-rows"></div>
