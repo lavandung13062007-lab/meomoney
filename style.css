@@ -93,7 +93,7 @@ body {
 .month-picker input[type="month"] {
   border: none;
   background: transparent;
-  font-size: 0.95rem;
+  font-size: 16px;
   font-weight: 600;
   color: var(--text);
   padding: 6px 4px;
@@ -754,6 +754,7 @@ body {
 #goalAmountOverlay,
 #quickNoteAmountOverlay { z-index: 60; }
 .sheet {
+  position: relative;
   background: var(--surface);
   width: 100%;
   border-radius: 24px 24px 0 0;
@@ -764,9 +765,11 @@ body {
   flex-direction: column;
   animation: slideUp 0.22s ease-out;
 }
+/* Dùng top thay vì transform: một số máy cài app vào màn hình chính (PWA/WKWebView)
+   không bật được bàn phím cho ô nhập nằm trong phần tử vừa có transform chạy animation */
 @keyframes slideUp {
-  from { transform: translateY(24px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from { top: 24px; opacity: 0; }
+  to { top: 0; opacity: 1; }
 }
 
 .sheet-top {
@@ -1247,7 +1250,7 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 9px 10px;
-  font-size: 0.9rem;
+  font-size: 16px;
   font-family: inherit;
 }
 .cat-add-btn { flex: 0 0 auto; padding: 9px 16px; }
@@ -1276,7 +1279,7 @@ body {
   background: var(--surface-2);
   color: var(--text);
   padding: 9px 10px;
-  font-size: 0.9rem;
+  font-size: 16px;
   font-family: inherit;
 }
 .quick-note-form .cat-add-btn { width: 100%; }
@@ -2136,7 +2139,7 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 9px 10px;
-  font-size: 0.88rem;
+  font-size: 16px;
   font-family: inherit;
   background: var(--surface);
   color: var(--text);
@@ -2197,14 +2200,14 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 9px 10px;
-  font-size: 0.9rem;
+  font-size: 16px;
 }
 .custom-formula-row input[type="number"] {
   width: 64px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 9px 8px;
-  font-size: 0.9rem;
+  font-size: 16px;
   text-align: center;
 }
 .custom-formula-row-remove {
