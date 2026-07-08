@@ -39,6 +39,18 @@ var SHEET_PLAYERS = 'Players';      // tài khoản người chơi
 var SHEET_REFERRALS = 'Referrals';  // mỗi mã đã có người nhận -> 1 dòng
 var LEADERBOARD_SIZE = 30;
 
+// Giải thưởng hiển thị trên trang. Sửa số tiền ở đây nếu cần đổi, không cần
+// sửa gì khác — trang web tự đọc từ đây.
+var PRIZES = [
+  { rank: 1, amount: 100000 },
+  { rank: 2, amount: 35000 },
+  { rank: 3, amount: 15000 },
+];
+
+function fmtVnd_(n) {
+  return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' đ';
+}
+
 // ---------------- tiện ích chung ----------------
 
 function getSheet_(name, headers) {
@@ -202,9 +214,22 @@ function apiSubmit(token, code) {
   }
 }
 
+function totalPlayersCount_() {
+  var sheet = getSheet_(SHEET_PLAYERS, ['Tên', 'MậtKhẩuHash', 'Token', 'Tạo lúc']);
+  var n = sheet.getLastRow() - 1;
+  return n > 0 ? n : 0;
+}
+
 function apiLeaderboard() {
   var arr = rankedList_();
-  return { ok: true, top: arr.slice(0, LEADERBOARD_SIZE), totalPlayers: arr.length };
+  var totalValidInvites = 0;
+  for (var i = 0; i < arr.length; i++) totalValidInvites += arr[i].count;
+  return {
+    ok: true,
+    top: arr.slice(0, LEADERBOARD_SIZE),
+    totalPlayers: totalPlayersCount_(),        // tổng số người đã tạo tài khoản tham gia
+    totalValidInvites: totalValidInvites,       // tổng số lượt mời đã được tính điểm (toàn hệ thống)
+  };
 }
 
 function apiMe(token) {
@@ -298,10 +323,46 @@ function PAGE_HTML() {
 '  .me-row{background:#fff6f1;}',
 '  .empty{color:var(--mut);font-size:.85rem;text-align:center;padding:10px 0;}',
 '  .foot{color:var(--mut);font-size:.75rem;text-align:center;line-height:1.5;}',
+'  .msg.note{color:var(--mut);word-break:break-all;}',
+'  details.rules{margin-top:12px;border-top:1px solid var(--bd);padding-top:12px;}',
+'  details.rules summary{cursor:pointer;font-weight:700;font-size:.9rem;list-style:none;}',
+'  details.rules summary::-webkit-details-marker{display:none;}',
+'  details.rules summary::before{content:"▸ ";display:inline-block;transition:transform .15s ease;}',
+'  details.rules[open] summary::before{transform:rotate(90deg);}',
+'  details.rules ol{margin:10px 0 0;padding-left:20px;font-size:.85rem;color:var(--mut);line-height:1.65;}',
+'  details.rules ol li{margin-bottom:5px;}',
+'  .prize-card h2{margin-bottom:10px;}',
+'  .prizes{display:flex;flex-direction:column;gap:8px;}',
+'  .prize-row{display:flex;justify-content:space-between;align-items:center;background:var(--bg);border-radius:12px;padding:11px 14px;font-size:.95rem;font-weight:600;}',
+'  .prize-row b{color:var(--od);font-size:1.05rem;font-weight:800;}',
+'  .lbstats{font-size:.82rem;color:var(--mut);margin:-6px 0 12px;}',
 '</style>',
 '<div class="wrap">',
 '  <h1>Đua Top Giới Thiệu 🏆</h1>',
 '  <p class="sub">Mời bạn bè dùng MeoMoney — gom mã, leo top!</p>',
+
+'  <div class="card">',
+'    <button id="shareBtn" onclick="doShare()">📤 Chia sẻ link mời bạn cài app</button>',
+'    <div id="shareMsg" class="msg"></div>',
+'    <details class="rules">',
+'      <summary>Cách chơi / Thể lệ</summary>',
+'      <ol>',
+'        <li>Bấm nút "Chia sẻ link mời bạn cài app" ở trên rồi gửi cho bạn bè.</li>',
+'        <li>Sau khi bạn bè cài MeoMoney và dùng vài ngày, họ vào app → Cài đặt → chạm vào "Mã giới thiệu của bạn" để sao chép mã.</li>',
+'        <li>Xin mã đó từ họ, rồi tạo tài khoản/đăng nhập ở trang này và nhập mã vào ô "Nhập mã người bạn đã mời".</li>',
+'        <li>Mã chỉ được TÍNH ĐIỂM khi người được mời đã thực sự dùng app đủ nhiều (chống mã ảo/spam) — mã mới nhập sẽ ở trạng thái "Đang chờ" cho tới lúc đó.</li>',
+'        <li>Ai có nhiều mã hợp lệ nhất khi kết thúc sự kiện sẽ thắng giải.</li>',
+'      </ol>',
+'    </details>',
+'  </div>',
+
+'  <div class="card prize-card">',
+'    <h2>🎁 Phần thưởng</h2>',
+'    <div class="prizes">' + PRIZES.map(function (p) {
+      var medal = p.rank === 1 ? '🥇' : p.rank === 2 ? '🥈' : p.rank === 3 ? '🥉' : '🏅';
+      return '<div class="prize-row"><span>' + medal + ' Hạng ' + p.rank + '</span><b>' + fmtVnd_(p.amount) + '</b></div>';
+    }).join('') + '</div>',
+'  </div>',
 
 '  <div class="card" id="authCard">',
 '    <div class="tabs">',
@@ -332,6 +393,7 @@ function PAGE_HTML() {
 
 '  <div class="card">',
 '    <h2>Bảng xếp hạng</h2>',
+'    <div class="lbstats" id="lbStats">Đang tải thống kê…</div>',
 '    <div id="lb"><div class="empty">Đang tải…</div></div>',
 '  </div>',
 
@@ -341,12 +403,22 @@ function PAGE_HTML() {
 '<script>',
 '  var TOKEN = localStorage.getItem("meo_ct_token") || "";',
 '  var UNAME = localStorage.getItem("meo_ct_user") || "";',
+'  var APP_STORE_URL = "https://meomoney.vercel.app/store.html";',
 '  var tab = 0;',
 '  function $(id){return document.getElementById(id);}',
 '  function setTab(t){tab=t;$("tabLogin").className=t===0?"on":"";$("tabReg").className=t===1?"on":"";$("authBtn").textContent=t===0?"Đăng nhập":"Tạo tài khoản";$("authMsg").textContent="";}',
 '  function busy(id,v){$(id).disabled=v;}',
 '  function fail(id,m){var e=$(id);e.className="msg err";e.textContent=m;}',
 '  function okmsg(id,m){var e=$(id);e.className="msg ok";e.textContent=m;}',
+'  function note(id,m){var e=$(id);e.className="msg note";e.textContent=m;}',
+
+'  function doShare(){',
+'    var data={title:"MeoMoney",text:"Cài MeoMoney đi, quản lý thu chi siêu dễ! Cài xong gửi mình mã giới thiệu của bạn nhé 🐾",url:APP_STORE_URL};',
+'    if(navigator.share){navigator.share(data).catch(function(){});return;}',
+'    if(navigator.clipboard&&navigator.clipboard.writeText){',
+'      navigator.clipboard.writeText(APP_STORE_URL).then(function(){okmsg("shareMsg","Đã sao chép link! Gửi cho bạn bè nhé.");}).catch(function(){note("shareMsg",APP_STORE_URL);});',
+'    } else { note("shareMsg",APP_STORE_URL); }',
+'  }',
 
 '  function doAuth(){',
 '    var u=$("au").value.trim(), p=$("ap").value;',
@@ -398,9 +470,10 @@ function PAGE_HTML() {
 '  function loadLb(){',
 '    google.script.run.withSuccessHandler(function(r){',
 '      if(!r||!r.ok)return;',
+'      $("lbStats").textContent = r.totalPlayers + " người tham gia · " + r.totalValidInvites + " lượt mời thành công";',
 '      if(!r.top.length){$("lb").innerHTML=\'<div class="empty">Chưa có ai ghi điểm. Hãy là người đầu tiên!</div>\';return;}',
 '      var h=\'<table><tr><th class="rankcol">#</th><th>Tên</th><th class="r">Mã hợp lệ</th></tr>\';',
-'      for(var i=0;i<r.top.length;i++){var p=r.top[i];var me=UNAME&&p.username.toLowerCase()===UNAME.toLowerCase();h+=\'<tr class="\'+(me?"me-row":"")+\'"><td class="rankcol">\'+(i+1)+\'</td><td>\'+esc(p.username)+(me?" (bạn)":"")+\'</td><td class="r">\'+p.count+\'</td></tr>\';}',
+'      for(var i=0;i<r.top.length;i++){var p=r.top[i];var me=UNAME&&p.username.toLowerCase()===UNAME.toLowerCase();var rk=i===0?"🥇":i===1?"🥈":i===2?"🥉":String(i+1);h+=\'<tr class="\'+(me?"me-row":"")+\'"><td class="rankcol">\'+rk+\'</td><td>\'+esc(p.username)+(me?" (bạn)":"")+\'</td><td class="r">\'+p.count+\'</td></tr>\';}',
 '      h+=\'</table>\';$("lb").innerHTML=h;',
 '    }).apiLeaderboard();',
 '  }',
