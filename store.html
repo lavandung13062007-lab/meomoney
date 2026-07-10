@@ -216,14 +216,21 @@
     margin-bottom: 8px;
   }
   .shots {
+    position: relative;
     display: flex;
     gap: 14px;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     padding: 2px 2px 12px;
     scrollbar-width: none;
+    touch-action: pan-x pan-y;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
   }
   .shots::-webkit-scrollbar { display: none; }
+  .dots { display: flex; justify-content: center; gap: 7px; margin-top: 4px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; border: none; background: #cdd8d1; padding: 0; cursor: pointer; transition: background 0.2s, transform 0.2s; }
+  .dot.active { background: var(--primary); transform: scale(1.3); }
   .shot {
     flex: 0 0 auto;
     width: 208px;
@@ -262,7 +269,7 @@
     overflow: hidden;
     background: var(--bg);
   }
-  .screen img { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; }
+  .screen img { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; pointer-events: none; -webkit-user-drag: none; user-select: none; }
 
   /* ---- Giới thiệu + thông tin ứng dụng (kiểu Google Play / App Store) ---- */
   .about {
@@ -399,6 +406,7 @@
         <div class="phone"><div class="screen"><img src="store-previews/5-goals.png" alt="Mục tiêu tiết kiệm" loading="lazy" /></div></div>
       </div>
     </div>
+    <div class="dots" id="shotDots"></div>
   </div>
 
   <div class="about">
@@ -489,6 +497,36 @@
   const closeOverlay = document.getElementById("closeOverlay");
   const tutorialVideo = document.getElementById("tutorialVideo");
   const videoPlaceholder = document.getElementById("videoPlaceholder");
+
+  // Chấm tròn chuyển ảnh xem trước: bấm để chuyển, và tự sáng theo ảnh đang xem
+  (function initShotDots() {
+    const shotsEl = document.querySelector(".shots");
+    const shotEls = Array.from(document.querySelectorAll(".shot"));
+    const dotsEl = document.getElementById("shotDots");
+    if (!shotsEl || !dotsEl || !shotEls.length) return;
+    shotEls.forEach((shot, i) => {
+      const dot = document.createElement("button");
+      dot.type = "button";
+      dot.className = "dot" + (i === 0 ? " active" : "");
+      dot.setAttribute("aria-label", "Ảnh " + (i + 1));
+      dot.addEventListener("click", () => {
+        const target = shotsEl.scrollLeft + (shot.getBoundingClientRect().left - shotsEl.getBoundingClientRect().left) - (shotsEl.clientWidth - shot.clientWidth) / 2;
+        shotsEl.scrollTo({ left: target, behavior: "smooth" });
+      });
+      dotsEl.appendChild(dot);
+    });
+    const dots = Array.from(dotsEl.children);
+    shotsEl.addEventListener("scroll", () => {
+      const center = shotsEl.scrollLeft + shotsEl.clientWidth / 2;
+      let best = 0, bestDist = Infinity;
+      shotEls.forEach((shot, i) => {
+        const c = shot.offsetLeft + shot.clientWidth / 2;
+        const dist = Math.abs(c - center);
+        if (dist < bestDist) { bestDist = dist; best = i; }
+      });
+      dots.forEach((d, i) => d.classList.toggle("active", i === best));
+    }, { passive: true });
+  })();
 
   const DEVICE_ID_KEY = "sotuchi.deviceId";
   function getDeviceId() {
