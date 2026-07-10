@@ -207,6 +207,118 @@
     color: var(--text-muted);
   }
 
+  /* ---- Thư viện ảnh xem trước kiểu App Store ---- */
+  .shots-wrap { width: 100%; }
+  .shots-title {
+    font-size: 0.95rem;
+    font-weight: 800;
+    text-align: left;
+    margin-bottom: 8px;
+  }
+  .shots {
+    display: flex;
+    gap: 14px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding: 2px 2px 12px;
+    scrollbar-width: none;
+  }
+  .shots::-webkit-scrollbar { display: none; }
+  .shot {
+    flex: 0 0 auto;
+    width: 208px;
+    scroll-snap-align: center;
+    background: #fff;
+    border: 1px solid #eef3f0;
+    border-radius: 22px;
+    padding: 15px 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 13px;
+    box-shadow: 0 6px 18px rgba(20, 40, 30, 0.05);
+  }
+  .shot-cap {
+    font-size: 0.9rem;
+    font-weight: 800;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    min-height: 2.3em;
+    display: flex;
+    align-items: center;
+    text-align: center;
+  }
+  .phone {
+    position: relative;
+    width: 170px;
+    aspect-ratio: 170 / 352;
+    background: #101613;
+    border-radius: 30px;
+    padding: 7px;
+    box-shadow: 0 12px 26px rgba(20, 40, 30, 0.18);
+  }
+  .phone::before {
+    content: "";
+    position: absolute;
+    top: 14px; left: 50%; transform: translateX(-50%);
+    width: 52px; height: 15px;
+    background: #101613; border-radius: 9px; z-index: 3;
+  }
+  .screen {
+    width: 100%; height: 100%;
+    border-radius: 24px;
+    overflow: hidden;
+    background: var(--bg);
+    display: flex; flex-direction: column;
+    padding: 26px 11px 11px;
+    gap: 8px;
+  }
+  .screen-brand { font-size: 0.6rem; font-weight: 800; color: var(--primary); text-align: center; letter-spacing: 0.02em; }
+  .m-health {
+    border-radius: 16px; padding: 12px 10px; text-align: center; color: #fff;
+    background: linear-gradient(160deg, #22c55e, #15803d);
+    box-shadow: 0 8px 18px rgba(22, 163, 74, 0.28);
+  }
+  .m-health .lbl { font-size: 0.5rem; font-weight: 700; opacity: 0.9; letter-spacing: 0.05em; }
+  .m-health .pct { font-size: 1.9rem; font-weight: 900; line-height: 1.15; }
+  .m-bar { height: 8px; border-radius: 99px; background: rgba(255, 255, 255, 0.32); margin-top: 3px; overflow: hidden; }
+  .m-bar > i { display: block; height: 100%; background: #fff; border-radius: 99px; }
+  .m-cards { display: flex; gap: 7px; }
+  .m-card { flex: 1; background: #fff; border-radius: 12px; padding: 8px 7px; box-shadow: 0 3px 8px rgba(20, 40, 30, 0.05); text-align: left; }
+  .m-card .k { font-size: 0.48rem; color: var(--text-muted); font-weight: 600; }
+  .m-card .v { font-size: 0.72rem; font-weight: 800; margin-top: 1px; }
+  .m-card .v.green { color: #16a34a; }
+  .m-jar { display: flex; align-items: center; gap: 7px; background: #fff; border-radius: 11px; padding: 7px 8px; box-shadow: 0 3px 8px rgba(20, 40, 30, 0.05); }
+  .m-jar .ic { font-size: 0.8rem; }
+  .m-jar .nm { flex: 1; font-size: 0.6rem; font-weight: 700; text-align: left; }
+  .m-jar .pc { font-size: 0.62rem; font-weight: 800; color: var(--primary); }
+  .m-donut {
+    width: 88px; height: 88px; border-radius: 50%; margin: 4px auto;
+    background: conic-gradient(#f97316 0 40%, #0ea5e9 40% 65%, #8b5cf6 65% 85%, #22c55e 85% 100%);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .m-donut > span { width: 52px; height: 52px; border-radius: 50%; background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 0.55rem; font-weight: 800; color: var(--text-muted); }
+  .m-legend { display: flex; flex-direction: column; gap: 4px; }
+  .m-leg { display: flex; align-items: center; gap: 6px; font-size: 0.56rem; font-weight: 600; text-align: left; }
+  .m-leg i { width: 8px; height: 8px; border-radius: 3px; flex-shrink: 0; }
+  .m-goal { background: #fff; border-radius: 14px; padding: 11px 10px; box-shadow: 0 3px 8px rgba(20, 40, 30, 0.05); text-align: left; }
+  .m-goal .gn { font-size: 0.68rem; font-weight: 800; }
+  .m-goal .gp { font-size: 0.48rem; color: var(--text-muted); margin: 2px 0 7px; }
+  .m-goal .gbar { height: 9px; border-radius: 99px; background: #eef3f0; overflow: hidden; }
+  .m-goal .gbar > i { display: block; height: 100%; width: 65%; border-radius: 99px; background: linear-gradient(90deg, #4ade80, #16a34a); }
+  .m-goal .gv { display: flex; justify-content: space-between; font-size: 0.55rem; font-weight: 700; margin-top: 5px; }
+
+  /* ---- Thẻ bình luận: sao + phản hồi của chủ shop ---- */
+  .comment-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .comment-stars { font-size: 0.78rem; letter-spacing: 1px; color: #f5b301; white-space: nowrap; }
+  .comment-stars .off { color: #e0e6e2; }
+  .comment-reply {
+    margin-top: 8px; background: #f3faf5; border-left: 3px solid var(--primary);
+    border-radius: 8px; padding: 7px 9px;
+  }
+  .comment-reply-head { font-size: 0.74rem; font-weight: 800; color: var(--primary); }
+  .comment-reply-text { font-size: 0.83rem; margin-top: 2px; white-space: pre-wrap; word-break: break-word; }
+
   .overlay {
     position: fixed;
     inset: 0;
@@ -274,6 +386,67 @@
     <a id="openBtn" class="btn btn-link" href="https://meomoney.vercel.app/" style="text-decoration:none; display:none;">Mở ứng dụng</a>
   </div>
   <div id="hint" class="hint"></div>
+
+  <div class="shots-wrap">
+    <div class="shots-title">Ảnh xem trước</div>
+    <div class="shots">
+      <div class="shot">
+        <div class="shot-cap">Xem sức khỏe tài chính tức thì</div>
+        <div class="phone"><div class="screen">
+          <div class="screen-brand">🐱 MeoMoney</div>
+          <div class="m-health">
+            <div class="lbl">SỨC KHỎE TÀI CHÍNH</div>
+            <div class="pct">82%</div>
+            <div class="m-bar"><i style="width:82%"></i></div>
+          </div>
+          <div class="m-cards">
+            <div class="m-card"><div class="k">Tổng tài sản</div><div class="v">18.5tr ₫</div></div>
+            <div class="m-card"><div class="k">Hôm nay</div><div class="v green">+120k</div></div>
+          </div>
+        </div></div>
+      </div>
+
+      <div class="shot">
+        <div class="shot-cap">Chia tiền theo công thức thông minh</div>
+        <div class="phone"><div class="screen">
+          <div class="screen-brand">🫙 6 Chiếc Lọ</div>
+          <div class="m-jar"><span class="ic">🏠</span><span class="nm">Thiết yếu</span><span class="pc">55%</span></div>
+          <div class="m-jar"><span class="ic">📈</span><span class="nm">Tự do tài chính</span><span class="pc">10%</span></div>
+          <div class="m-jar"><span class="ic">🎉</span><span class="nm">Hưởng thụ</span><span class="pc">10%</span></div>
+          <div class="m-jar"><span class="ic">🏦</span><span class="nm">Tiết kiệm</span><span class="pc">10%</span></div>
+          <div class="m-jar"><span class="ic">📚</span><span class="nm">Giáo dục</span><span class="pc">10%</span></div>
+        </div></div>
+      </div>
+
+      <div class="shot">
+        <div class="shot-cap">Thống kê trực quan mỗi tháng</div>
+        <div class="phone"><div class="screen">
+          <div class="screen-brand">Thống kê tháng 7</div>
+          <div class="m-donut"><span>Chi</span></div>
+          <div class="m-legend">
+            <div class="m-leg"><i style="background:#f97316"></i>Ăn uống · 40%</div>
+            <div class="m-leg"><i style="background:#0ea5e9"></i>Đi lại · 25%</div>
+            <div class="m-leg"><i style="background:#8b5cf6"></i>Mua sắm · 20%</div>
+            <div class="m-leg"><i style="background:#22c55e"></i>Khác · 15%</div>
+          </div>
+        </div></div>
+      </div>
+
+      <div class="shot">
+        <div class="shot-cap">Đặt mục tiêu, giữ kỷ luật</div>
+        <div class="phone"><div class="screen">
+          <div class="screen-brand">🎯 Mục tiêu</div>
+          <div class="m-goal">
+            <div class="gn">Mua laptop</div>
+            <div class="gp">Tiến độ tiết kiệm</div>
+            <div class="gbar"><i></i></div>
+            <div class="gv"><span>19.5tr ₫</span><span>30tr ₫</span></div>
+          </div>
+          <div class="m-jar"><span class="ic">📅</span><span class="nm">Giai đoạn 2 / 3</span><span class="pc">65%</span></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
 
   <div class="rating">
     <div id="ratingLabel" class="rating-label">Bạn thấy MeoMoney thế nào?</div>
@@ -362,6 +535,12 @@
     return div.innerHTML;
   }
 
+  function starsMarkup(sao) {
+    sao = Math.max(0, Math.min(5, Number(sao) || 0));
+    if (!sao) return "";
+    return `<span class="comment-stars">${"★".repeat(sao)}<span class="off">${"★".repeat(5 - sao)}</span></span>`;
+  }
+
   function renderComments(comments) {
     if (!comments.length) {
       commentListEl.innerHTML = '<div class="comment-empty">Chưa có bình luận nào.</div>';
@@ -371,7 +550,15 @@
       .map((c) => {
         const ten = escapeHtml(c.ten || "Người dùng ẩn danh");
         const noiDung = escapeHtml(c.noiDung || "");
-        return `<div class="comment-item"><div class="comment-name">${ten}</div><div class="comment-text">${noiDung}</div></div>`;
+        const reply = escapeHtml(c.phanHoi || "");
+        const replyHtml = reply
+          ? `<div class="comment-reply"><div class="comment-reply-head">🐱 Phản hồi từ MeoMoney</div><div class="comment-reply-text">${reply}</div></div>`
+          : "";
+        return `<div class="comment-item">
+          <div class="comment-head"><span class="comment-name">${ten}</span>${starsMarkup(c.sao)}</div>
+          <div class="comment-text">${noiDung}</div>
+          ${replyHtml}
+        </div>`;
       })
       .join("");
   }
@@ -413,15 +600,32 @@
     callStoreStats({ action: "download", deviceId: getDeviceId() }).then(renderStats);
   }
 
+  const MY_COMMENT_KEY = "sotuchi.myComment";
+  const savedComment = localStorage.getItem(MY_COMMENT_KEY);
+  if (savedComment) {
+    commentTextEl.value = savedComment;
+    commentSubmitEl.textContent = "Cập nhật";
+  }
+
   commentSubmitEl.addEventListener("click", () => {
     const text = commentTextEl.value.trim();
     if (!text) return;
+    const stars = Number(localStorage.getItem(MY_RATING_KEY) || 0);
+    if (!stars) {
+      ratingLabel.textContent = "Hãy chọn số sao trước khi gửi nhé!";
+      ratingLabel.style.color = "var(--primary)";
+      document.querySelector(".rating").scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
     const name = commentNameEl.value.trim();
     commentSubmitEl.disabled = true;
-    callStoreStats({ action: "comment", deviceId: getDeviceId(), name, text })
+    callStoreStats({ action: "comment", deviceId: getDeviceId(), name, text, stars })
       .then((data) => {
         renderStats(data);
-        commentTextEl.value = "";
+        localStorage.setItem(MY_COMMENT_KEY, text);
+        commentSubmitEl.textContent = "Cập nhật";
+        ratingLabel.textContent = "Cảm ơn bạn đã đánh giá!";
+        ratingLabel.style.color = "";
       })
       .finally(() => {
         commentSubmitEl.disabled = false;

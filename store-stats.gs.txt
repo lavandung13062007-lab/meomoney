@@ -48,12 +48,22 @@ function laySheetDanhGia() {
   return sheet;
 }
 
+// Cột "Phản hồi" (F) là nơi CHỦ SHOP tự gõ câu trả lời cho từng khách:
+// mở Google Sheet > tab Comments > gõ vào ô cột "Phản hồi" cùng hàng với
+// bình luận muốn trả lời > câu trả lời sẽ hiện dưới bình luận đó trên store.
 function laySheetBinhLuan() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const headers = ['Thời gian', 'Mã máy', 'Tên', 'Nội dung', 'Sao', 'Phản hồi'];
   let sheet = ss.getSheetByName(COMMENTS_SHEET);
   if (!sheet) {
     sheet = ss.insertSheet(COMMENTS_SHEET);
-    sheet.appendRow(['Thời gian', 'Mã máy', 'Tên', 'Nội dung']);
+    sheet.appendRow(headers);
+    return sheet;
+  }
+  // Tự vá thêm cột còn thiếu nếu sheet cũ chỉ có 4 cột (Sao, Phản hồi mới thêm)
+  const lastCol = sheet.getLastColumn();
+  if (lastCol < headers.length) {
+    sheet.getRange(1, lastCol + 1, 1, headers.length - lastCol).setValues([headers.slice(lastCol)]);
   }
   return sheet;
 }
@@ -82,23 +92,42 @@ function ghiDanhGia(deviceId, sao) {
   sheet.appendRow([new Date(), deviceId, sao]);
 }
 
-// Ghi 1 bình luận mới. Tên để trống thì hiện "Người dùng ẩn danh" ở phía
-// trang web. Giới hạn độ dài để tránh spam quá dài.
-function ghiBinhLuan(deviceId, ten, noiDung) {
+// Ghi bình luận kèm số sao. MỖI MÃ MÁY CHỈ 1 BÌNH LUẬN: nếu khách đã bình
+// luận rồi thì ghi đè nội dung + sao mới, nhưng GIỮ NGUYÊN phản hồi của chủ
+// shop (cột F) nếu đã có. Tên trống -> "Người dùng ẩn danh" ở trang web.
+function ghiBinhLuan(deviceId, ten, noiDung, sao) {
   noiDung = String(noiDung || '').trim().slice(0, 300);
   if (!deviceId || !noiDung) return;
   ten = String(ten || '').trim().slice(0, 40);
+  sao = Math.max(0, Math.min(5, parseInt(sao, 10) || 0));
   const sheet = laySheetBinhLuan();
-  sheet.appendRow([new Date(), deviceId, ten, noiDung]);
+  const data = sheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][1]).trim().toUpperCase() === deviceId) {
+      const phanHoiCu = data[i][5] || ''; // giữ nguyên câu trả lời của chủ shop
+      sheet.getRange(i + 1, 1, 1, 6).setValues([[new Date(), deviceId, ten, noiDung, sao, phanHoiCu]]);
+      return;
+    }
+  }
+  sheet.appendRow([new Date(), deviceId, ten, noiDung, sao, '']);
 }
 
-// Lấy N bình luận mới nhất (mới nhất lên đầu) để hiển thị trên trang store.
+// Lấy bình luận để hiển thị: ƯU TIÊN BÌNH LUẬN NHIỀU SAO trước (5 sao lên đầu),
+// cùng số sao thì mới nhất trước. Chỉ lấy các bình luận có nội dung chữ.
 function layBinhLuan() {
   const data = laySheetBinhLuan().getDataRange().getValues().slice(1);
   return data
-    .slice(-SO_BINH_LUAN_HIEN_THI)
-    .reverse()
-    .map((r) => ({ ten: String(r[2] || ''), noiDung: String(r[3] || '') }));
+    .map((r, idx) => ({
+      ten: String(r[2] || ''),
+      noiDung: String(r[3] || ''),
+      sao: Number(r[4]) || 0,
+      phanHoi: String(r[5] || ''),
+      _tg: r[0] instanceof Date ? r[0].getTime() : idx,
+    }))
+    .filter((c) => c.noiDung)
+    .sort((a, b) => b.sao - a.sao || b._tg - a._tg)
+    .slice(0, SO_BINH_LUAN_HIEN_THI)
+    .map((c) => ({ ten: c.ten, noiDung: c.noiDung, sao: c.sao, phanHoi: c.phanHoi }));
 }
 
 function tinhThongKe() {
@@ -116,7 +145,7 @@ function tinhThongKe() {
 // Web App: trang store.html gọi vào đây, ví dụ:
 //   ?action=download&deviceId=ABC123                     -> ghi 1 lượt tải
 //   ?action=rate&deviceId=ABC123&stars=5                  -> ghi đánh giá 5 sao
-//   ?action=comment&deviceId=ABC123&name=Nam&text=Hay!    -> ghi 1 bình luận
+//   ?action=comment&deviceId=ABC123&name=Nam&text=Hay!&stars=5 -> ghi 1 bình luận kèm sao
 //   (không truyền action)                                 -> chỉ lấy dữ liệu hiện tại
 // Mọi trường hợp đều trả về { downloads, avgRating, ratingCount, comments }.
 function doGet(e) {
@@ -129,7 +158,9 @@ function doGet(e) {
   } else if (action === 'rate') {
     ghiDanhGia(deviceId, parseInt(params.stars, 10));
   } else if (action === 'comment') {
-    ghiBinhLuan(deviceId, params.name, params.text);
+    const sao = parseInt(params.stars, 10);
+    ghiBinhLuan(deviceId, params.name, params.text, sao);
+    if (sao >= 1 && sao <= 5) ghiDanhGia(deviceId, sao); // bình luận kèm sao -> tính luôn vào điểm trung bình
   }
 
   const output = tinhThongKe();
