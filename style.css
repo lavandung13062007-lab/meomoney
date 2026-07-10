@@ -239,6 +239,45 @@ body {
 .health-bar-fill.zone-yellow { background: linear-gradient(90deg, #fbbf24, #d97706); box-shadow: 0 0 16px rgba(217, 119, 6, 0.45); }
 .health-bar-fill.zone-green { background: linear-gradient(90deg, #4ade80, var(--income)); box-shadow: 0 0 16px rgba(22, 163, 74, 0.45); }
 
+/* Thẻ sức khỏe đổi màu theo vùng — nền chuyển sắc dịu + phát sáng nhẹ theo màu */
+.health-card-front { transition: background 0.5s ease, box-shadow 0.5s ease, border-color 0.5s ease; }
+.health-card.zone-red .health-card-front {
+  background: linear-gradient(165deg, color-mix(in srgb, var(--expense) 15%, var(--surface)), var(--surface) 70%);
+  border-color: color-mix(in srgb, var(--expense) 30%, var(--border));
+  box-shadow: 0 14px 38px color-mix(in srgb, var(--expense) 22%, transparent);
+}
+.health-card.zone-yellow .health-card-front {
+  background: linear-gradient(165deg, color-mix(in srgb, #f59e0b 17%, var(--surface)), var(--surface) 70%);
+  border-color: color-mix(in srgb, #f59e0b 32%, var(--border));
+  box-shadow: 0 14px 38px color-mix(in srgb, #f59e0b 24%, transparent);
+}
+.health-card.zone-green .health-card-front {
+  background: linear-gradient(165deg, color-mix(in srgb, var(--income) 15%, var(--surface)), var(--surface) 70%);
+  border-color: color-mix(in srgb, var(--income) 30%, var(--border));
+  box-shadow: 0 14px 38px color-mix(in srgb, var(--income) 22%, transparent);
+}
+
+.health-share-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 2;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, transform 0.15s;
+}
+.health-share-btn svg { width: 17px; height: 17px; }
+.health-share-btn:active { transform: scale(0.9); }
+.health-share-btn:hover { background: color-mix(in srgb, var(--primary) 14%, transparent); color: var(--primary); }
+
 .health-meta {
   display: flex;
   justify-content: space-between;
@@ -600,6 +639,9 @@ body {
   white-space: nowrap;
 }
 .tx-side {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   text-align: right;
   flex-shrink: 0;
 }
@@ -608,6 +650,22 @@ body {
   font-size: 0.95rem;
   white-space: nowrap;
 }
+.tx-delete {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.55;
+  transition: background 0.15s, color 0.15s, opacity 0.15s;
+}
+.tx-delete:hover { background: var(--expense-bg); color: var(--expense); opacity: 1; }
+.tx-delete:active { transform: scale(0.9); }
 .tx-item.income .tx-amount { color: var(--income); }
 .tx-item.expense .tx-amount { color: var(--expense); }
 .tx-date {
@@ -2348,3 +2406,17 @@ body {
 }
 .tour-tooltip-desc { font-size: 0.86rem; color: var(--text); line-height: 1.5; }
 .tour-tooltip-btn { width: 100%; margin-top: 12px; }
+.tour-skip-btn {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.tour-skip-btn:hover { color: var(--text); }

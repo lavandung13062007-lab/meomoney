@@ -25,6 +25,10 @@
       "The financial health bar shows your current finances compared to your all-time record balance",
     ],
     "health.back.tagline": ["\"Liên tục tiến lên\"", "\"Keep moving forward\""],
+    "health.share.aria": ["Chia sẻ thẻ sức khỏe tài chính", "Share financial health card"],
+    "health.share.caption.green": ["Ví đang rất khỏe! 🌿", "Wallet's in great shape! 🌿"],
+    "health.share.caption.yellow": ["Giữ vững phong độ nhé! ✨", "Keep it steady! ✨"],
+    "health.share.caption.red": ["Cần chăm sóc ví thôi! 🚨", "Time to nurse the wallet! 🚨"],
     "dash.totalAssets": ["Tổng tài sản", "Total assets"],
     "dash.today": ["Hôm nay", "Today"],
     "dash.new": ["Mới", "New"],
@@ -102,6 +106,8 @@
     "tx.date": ["Ngày", "Date"],
     "tx.notePlaceholder": ["Ghi chú...", "Note..."],
     "tx.backspace.aria": ["Xóa 1 số", "Delete one digit"],
+    "tx.delete.aria": ["Xóa giao dịch", "Delete transaction"],
+    "tx.confirmDelete": ["Xóa giao dịch này?", "Delete this transaction?"],
     "tx.delete": ["Xóa", "Delete"],
     "tx.save": ["Lưu", "Save"],
     "tx.typeToggle.aria": ["Đổi khoản thu / khoản chi", "Switch income / expense"],
@@ -363,6 +369,7 @@
       "This is the back of the card. You can flip it back and forth anytime to see both sides.",
     ],
     "tour.continue": ["Tiếp tục", "Continue"],
+    "tour.skip": ["Bỏ qua hướng dẫn", "Skip tutorial"],
     "tour.formulaTab.title": ["Công thức chia tiền", "Money-splitting formula"],
     "tour.formulaTab.desc": [
       "Chạm vào 'Công thức' để chuyển sang chế độ phân bổ tiền theo phương pháp bạn thích.",
@@ -855,6 +862,7 @@
   const premiumStatusDescEl = document.getElementById("premiumStatusDesc");
 
   const healthCardEl = document.getElementById("healthCard");
+  const healthShareBtn = document.getElementById("healthShareBtn");
   const healthCardInnerEl = document.getElementById("healthCardInner");
   const healthBadge = document.getElementById("healthBadge");
   const healthPctEl = document.getElementById("healthPct");
@@ -931,6 +939,115 @@
 
   healthCardEl.addEventListener("click", () => {
     healthCardInnerEl.classList.toggle("flipped");
+  });
+
+  /* ---------- chia sẻ thẻ sức khỏe (tạo poster) ---------- */
+
+  function posterRoundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function buildHealthPoster(pct, zone) {
+    const W = 1080, H = 1350;
+    const canvas = document.createElement("canvas");
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext("2d");
+    const palette = {
+      green: ["#22c55e", "#15803d"],
+      yellow: ["#f59e0b", "#b45309"],
+      red: ["#ef4444", "#b91c1c"],
+    }[zone];
+    const font = "-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+
+    const bg = ctx.createLinearGradient(0, 0, W, H);
+    bg.addColorStop(0, palette[0]);
+    bg.addColorStop(1, palette[1]);
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.fillStyle = "rgba(255,255,255,0.08)";
+    ctx.beginPath(); ctx.arc(W * 0.86, H * 0.13, 260, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(W * 0.1, H * 0.92, 220, 0, Math.PI * 2); ctx.fill();
+
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#fff";
+
+    ctx.font = `800 58px ${font}`;
+    ctx.fillText("🐱 MeoMoney", W / 2, 150);
+
+    ctx.globalAlpha = 0.9;
+    ctx.font = `700 40px ${font}`;
+    ctx.fillText("SỨC KHỎE TÀI CHÍNH", W / 2, 400);
+    ctx.globalAlpha = 1;
+
+    ctx.font = `900 360px ${font}`;
+    ctx.shadowColor = "rgba(0,0,0,0.18)";
+    ctx.shadowBlur = 30;
+    ctx.shadowOffsetY = 14;
+    ctx.fillText(pct + "%", W / 2, 720);
+    ctx.shadowColor = "transparent";
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
+
+    const barW = 720, barH = 44, barX = (W - barW) / 2, barY = 830;
+    posterRoundRect(ctx, barX, barY, barW, barH, barH / 2);
+    ctx.fillStyle = "rgba(255,255,255,0.28)";
+    ctx.fill();
+    const fillW = Math.max(barH, (barW * Math.max(0, Math.min(100, pct))) / 100);
+    posterRoundRect(ctx, barX, barY, fillW, barH, barH / 2);
+    ctx.fillStyle = "#fff";
+    ctx.fill();
+
+    ctx.fillStyle = "#fff";
+    ctx.font = `700 48px ${font}`;
+    ctx.fillText(t(`health.share.caption.${zone}`), W / 2, 1010);
+
+    ctx.globalAlpha = 0.92;
+    ctx.font = `600 42px ${font}`;
+    ctx.fillText("Nuôi mèo, khỏe ví 🐾", W / 2, 1210);
+    ctx.globalAlpha = 0.72;
+    ctx.font = `500 34px ${font}`;
+    ctx.fillText("meomoney.vercel.app", W / 2, 1268);
+    ctx.globalAlpha = 1;
+
+    return canvas;
+  }
+
+  async function shareHealthPoster() {
+    const { healthPct } = computeFinance();
+    const zone = healthZone(healthPct);
+    const canvas = buildHealthPoster(Math.round(healthPct), zone);
+    const blob = await new Promise((res) => canvas.toBlob(res, "image/png"));
+    if (!blob) return;
+    const file = new File([blob], "meomoney-suc-khoe.png", { type: "image/png" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], text: t("health.share.caption." + zone) + " 🐱 MeoMoney" });
+      } catch (e) {
+        /* người dùng hủy */
+      }
+      return;
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "meomoney-suc-khoe.png";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  healthShareBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    shareHealthPoster();
   });
 
   /* ---------- bấm thẻ tổng tài sản / hôm nay -> mở Thống kê ---------- */
@@ -2189,6 +2306,8 @@
     healthPctEl.className = `health-pct zone-${zone}`;
     healthBarFillEl.style.width = `${healthPct}%`;
     healthBarFillEl.className = `health-bar-fill zone-${zone}`;
+    healthCardEl.classList.remove("zone-red", "zone-yellow", "zone-green");
+    healthCardEl.classList.add(`zone-${zone}`);
     healthCurrentEl.textContent = formatCurrency(current);
     healthRecordEl.textContent = formatCurrency(record);
     healthBadge.hidden = !(record > 0 && current >= record);
@@ -2274,9 +2393,17 @@
         </div>
         <div class="tx-side">
           <div class="tx-amount">${tx.type === "income" ? "+" : "−"} ${formatCurrency(tx.amount)}</div>
+          <button type="button" class="tx-delete" data-i18n-aria="tx.delete.aria" aria-label="${t("tx.delete.aria")}">✕</button>
         </div>
       `;
       li.addEventListener("click", () => openModal(tx));
+      li.querySelector(".tx-delete").addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (!confirm(t("tx.confirmDelete"))) return;
+        transactions = transactions.filter((x) => x.id !== tx.id);
+        saveTransactions(transactions);
+        renderAll();
+      });
       transactionListEl.appendChild(li);
     }
   }
@@ -3190,6 +3317,7 @@
       <div class="tour-tooltip-title">${title}</div>
       <div class="tour-tooltip-desc">${desc}</div>
       ${opts.buttonLabel ? `<button type="button" class="btn btn-primary tour-tooltip-btn">${opts.buttonLabel}</button>` : ""}
+      <button type="button" class="tour-skip-btn">${t("tour.skip")}</button>
     `;
     document.body.appendChild(tourTooltipEl);
 
@@ -3202,6 +3330,8 @@
       opts.onAdvance();
     };
 
+    tourTooltipEl.querySelector(".tour-skip-btn").addEventListener("click", skipTour);
+
     if (opts.buttonLabel) {
       tourTooltipEl.querySelector(".tour-tooltip-btn").addEventListener("click", advance);
     } else if (opts.eventTarget) {
@@ -3209,6 +3339,12 @@
     } else {
       target.addEventListener("click", advance, { once: true });
     }
+  }
+
+  function skipTour() {
+    teardownTourUI();
+    localStorage.setItem(ONBOARDING_KEY, "1");
+    closeModal();
   }
 
   function startTour() {
