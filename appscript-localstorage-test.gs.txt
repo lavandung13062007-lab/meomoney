@@ -1,0 +1,72 @@
+/*
+  MeoMoney — TEST localStorage trên Google Apps Script
+  ----------------------------------------------------
+  Mục đích: kiểm tra xem trình duyệt có CHO PHÉP LƯU dữ liệu (localStorage)
+  bên trong web app Apps Script hay không. MeoMoney lưu TOÀN BỘ dữ liệu tài
+  chính bằng localStorage, nên nếu chỗ này không hoạt động thì bản Apps Script
+  sẽ mất sạch dữ liệu mỗi lần đóng app => vô dụng. PHẢI test trước khi port.
+
+  CÁCH DÙNG:
+  1. Vào https://script.google.com  ->  New project (Dự án mới)
+  2. Dán toàn bộ file này vào, đặt tên gì cũng được, Lưu.
+  3. Deploy > New deployment > chọn "Web app"
+       - Execute as: Me (Tôi)
+       - Who has access: Anyone (Bất kỳ ai)  hoặc  Only myself (Chỉ mình tôi)
+     Deploy > copy đường link /exec.
+  4. Mở link đó TRÊN ĐIỆN THOẠI (chính máy bạn định dùng app).
+  5. Bấm nút "Lưu số 12345", rồi TẢI LẠI trang vài lần, rồi ĐÓNG HẲN trình
+     duyệt và mở lại link sau vài phút.
+  6. Đọc dòng trạng thái:
+       ✅ "localStorage HOẠT ĐỘNG" + số đếm tăng dần + giá trị 12345 còn giữ
+          => OK, làm bản Apps Script được.
+       ❌ "localStorage BỊ CHẶN" hoặc số đếm luôn = 1 / giá trị bị mất
+          => Không nên làm bản Apps Script (dữ liệu không bền).
+*/
+
+function doGet() {
+  return HtmlService.createHtmlOutput(PAGE_())
+    .setTitle('MeoMoney - Test lưu dữ liệu')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+function PAGE_() {
+  return [
+    '<div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;padding:22px;max-width:420px;margin:0 auto;color:#14261c">',
+    '  <h2 style="margin:0 0 6px">Test lưu dữ liệu</h2>',
+    '  <p style="color:#6b7c73;margin:0 0 16px;font-size:14px">Kiểm tra localStorage có hoạt động trong Apps Script không.</p>',
+    '  <div id="status" style="padding:12px;border-radius:12px;font-weight:600;font-size:15px;background:#f2f8f4">Đang kiểm tra...</div>',
+    '  <p style="margin:16px 0 4px">Số lần đã mở trang: <b id="count" style="font-size:20px">?</b></p>',
+    '  <p id="saved" style="margin:4px 0 16px;color:#6b7c73">—</p>',
+    '  <button id="save" style="padding:12px 16px;border:none;border-radius:10px;background:#f15a29;color:#fff;font-weight:700;font-size:15px">Lưu số 12345</button>',
+    '  <button id="clear" style="padding:12px 16px;border:1px solid #dfeee4;border-radius:10px;background:#fff;color:#14261c;font-weight:700;font-size:15px;margin-left:8px">Xóa hết</button>',
+    '  <script>',
+    '  (function(){',
+    '    var statusEl=document.getElementById("status");',
+    '    try {',
+    '      var n=Number(localStorage.getItem("meo_test_count")||"0")+1;',
+    '      localStorage.setItem("meo_test_count",String(n));',
+    '      document.getElementById("count").textContent=n;',
+    '      var v=localStorage.getItem("meo_test_value");',
+    '      document.getElementById("saved").textContent="Giá trị đã lưu: "+(v?v:"(chưa có)");',
+    '      if(n>1){',
+    '        statusEl.textContent="✅ localStorage HOẠT ĐỘNG — số đếm đang tăng, dữ liệu được giữ lại.";',
+    '        statusEl.style.background="#eafdf1"; statusEl.style.color="#128040";',
+    '      } else {',
+    '        statusEl.textContent="Lần mở đầu tiên. Hãy TẢI LẠI trang (hoặc đóng/mở lại) — nếu số đếm tăng lên 2,3,4... là ĐẠT.";',
+    '        statusEl.style.background="#fff7ed"; statusEl.style.color="#b45309";',
+    '      }',
+    '      document.getElementById("save").onclick=function(){',
+    '        localStorage.setItem("meo_test_value","12345");',
+    '        document.getElementById("saved").textContent="Giá trị đã lưu: 12345 (tải lại để xem còn giữ không)";',
+    '      };',
+    '      document.getElementById("clear").onclick=function(){ localStorage.clear(); location.reload(); };',
+    '    } catch(e){',
+    '      statusEl.textContent="❌ localStorage BỊ CHẶN: "+e.message+" — KHÔNG nên làm bản Apps Script.";',
+    '      statusEl.style.background="#fef2f2"; statusEl.style.color="#991b1b";',
+    '    }',
+    '  })();',
+    '  </script>',
+    '</div>'
+  ].join('\n');
+}
